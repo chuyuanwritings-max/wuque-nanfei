@@ -498,7 +498,7 @@ function densest(x,y,range=420){ let best=null,bn=-1; const cand=G.enemies.filte
 function randEnemy(x,y,range=360){ const c=G.enemies.filter(e=>!e.dead&&(e.x-x)**2+(e.y-y)**2<range*range); return c.length?pick(c):null; }
 
 /* ---------------- 伤害、五行、击杀 ---------------- */
-function ctxOf(g,ox,oy,turret){ const bpp=bpOf(g); return {g,id:g.id,lv:g.lv,mod:g.mod,br:g.br,bp:bpp,ox,oy,turret:!!turret,els:elsOf(g),src:GEARS[g.id].k,mul:mulOf(g)*geneMul(g)*(1+.25*((G&&G.sealed)?G.sealed.length:0))}; }
+function ctxOf(g,ox,oy,turret){ const bpp=bpOf(g); return {g,id:g.id,lv:g.lv,mod:g.mod,br:g.br,bp:bpp,ox,oy,turret:!!turret,els:elsOf(g),src:GEARS[g.id].k,mul:mulOf(g)*geneMul(g)*(1+.2*((G&&G.sealed)?G.sealed.length:0))}; }
 function hurt(e,dmg,c,o={}){
   if(e.dead) return; if(e.brittle>0) dmg*=1.6; if(P.hideT>0&&c&&c.src==='atk') dmg*=1.5;
   if(e.type==='shi'&&o.kbx!==undefined&&(o.kbx*(e.fx||0)+o.kby*(e.fy||0))<-.25){ dmg*=.3; if(!o.silent&&G.t-(e.dingT||0)>.25){ e.dingT=G.t; G.texts.push({x:e.x,y:e.y-e.r-14,t:0,life:.4,s:'叮',c:'#c8c4bc',word:1}); sfx('block'); } } dmg=Math.max(1,Math.round(dmg)); e.hp-=dmg; e.flash=.1; e.hitT=.14;
@@ -570,7 +570,7 @@ function killEnemy(e,src){
   // 掉铜屑：不是每个都掉。解脱的（被守打死）更容易掉——防御有实利
   if(e.boss) dropXP(e.x,e.y,70);
   else if(e.elite) dropXP(e.x,e.y,16);
-  else { const chance=freed?.7:.32; if(Math.random()<chance) dropXP(e.x,e.y,3+((G.endless||0)>>1)); }
+  else { const chance=(freed?.7:.32)*Math.max(.6,1-.08*(G.endless||0)); if(Math.random()<chance) dropXP(e.x,e.y,3); }
   if(e.elite){ G.chisel=(G.chisel||0)+1; G.texts.push({x:e.x,y:e.y-40,t:0,life:1.4,s:'鲁班凿 +1',c:'#e0b070',word:1,syn:1}); if(G.mode==='play') say('监工俑掉了一把<b style="color:#e0b070">鲁班凿</b> · 能拆下一件装备（暂停 → 整理格子）',3200); G.pickups.push({x:e.x,y:e.y,v:0,heal:25,t:0}); G.hitstop=Math.max(G.hitstop,.07); G.shake=8; const ev=checkEvos(); if(ev.length){ ev.forEach(id=>{ toast('进化 · '+GEARS[id].n); }); refreshSlots(); } }
   if(e.boss){ G.bossDead=true; G.hitstop=.18; G.shake=16; toast((e.bname||'守陵石兽')+' · 碎了'); setTimeout(()=>{ if(G&&G.state==='play') openChest(); },1100); }
 }
@@ -1417,7 +1417,7 @@ function coinFX(p){ G.coinChain=(G.real-(G.coinLast||-9)<.35)?(G.coinChain||0)+1
   sfx('coin',1+Math.min(G.coinChain,24)*.035); G.xpPulse=1;
   G.parts.push({x:P.x+rand(-6,6),y:P.y-14,vx:rand(-30,30),vy:-80,t:0,life:.35,s:p.v>=5?4:2.6,c:'#ffd27a',soft:1});
   const ci=hasGear('ci'); if(ci&&(bpOf(ci)||{}).coinHeal) P.hp=Math.min(P.maxhp,P.hp+1); }
-function gainXP(v){ if(G.mode==='sandbox') return; P.xp+=v; while(P.xp>=P.need){ P.xp-=P.need; P.lv++; P.need=needOf(P.lv); G.pendingLv++;
+function gainXP(v){ if(G.mode==='sandbox') return; P.xp+=v; while(P.xp>=P.need){ P.xp-=P.need; P.lv++; P.need=Math.round(needOf(P.lv)*(1+.25*(G.endless||0))); G.pendingLv++;
   G.areas.push({kind:'ring',x:P.x,y:P.y,r:90,life:.5,max:.5,col:'#ffd27a'}); burst(P.x,P.y-10,'#ffd27a',16); } }
 function rollChoices(){
   const opts=[]; const full=G.gears.length>=cap();
