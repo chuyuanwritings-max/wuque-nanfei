@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>墨 1.6（原型）</title>
+<title>墨 1.7（原型）</title>
 <style>
 @font-face{font-family:"BM-Long";src:local("ChillLongCangKaiShu"),local("寒蝉龙藏楷书"),url("../../../00_字体/标题_寒蝉龙藏楷书/ChillLongCangKaiShu_Regular.otf")}
 @font-face{font-family:"BM-Hei";src:local("FZHei-B01S"),local("方正黑体简体"),url("../../../00_字体/界面_方正黑体/方正黑体简体.ttf")}
@@ -129,7 +129,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <!-- 开始 -->
 <div id="ovTitle" class="ov on dark" style="overflow:auto;justify-content:flex-start;touch-action:pan-y">
   <div class="title" style="margin-top:4vh">墨</div>
-  <div class="sub">原型 1.6<br>你是被封进始皇陵的墨家工匠。只管走位，器与守自动出手。<br>六格凑满，按五行起一卦，一局只有一个大招。</div>
+  <div class="sub">原型 1.7<br>你是被封进始皇陵的墨家工匠。只管走位，器与守自动出手。<br>六格凑满，按五行起一卦，一局只有一个大招。</div>
   <button class="btn" data-act="start">开始 · 第一层（3 分钟）</button>
   <button class="btn ghost" data-act="sandbox">试验台 · 随意搭配器、守、零件</button>
   <div class="hint">电脑：WASD 或方向键走位，Esc 暂停，1 / 2 / 3 选卡<br>手机：按住屏幕任意处拖动走位</div>
@@ -457,7 +457,7 @@ function randEnemy(x,y,range=360){ const c=G.enemies.filter(e=>!e.dead&&(e.x-x)*
 /* ---------------- 伤害、五行、击杀 ---------------- */
 function ctxOf(g,ox,oy,turret){ const bpp=bpOf(g); return {g,id:g.id,lv:g.lv,mod:g.mod,br:g.br,bp:bpp,ox,oy,turret:!!turret,els:elsOf(g),src:GEARS[g.id].k,mul:mulOf(g)*geneMul(g)}; }
 function hurt(e,dmg,c,o={}){
-  if(e.dead) return; if(e.brittle>0) dmg*=1.6;
+  if(e.dead) return; if(e.brittle>0) dmg*=1.6; if(P.hideT>0&&c&&c.src==='atk') dmg*=1.5;
   if(e.type==='shi'&&o.kbx!==undefined&&(o.kbx*(e.fx||0)+o.kby*(e.fy||0))<-.25){ dmg*=.3; if(!o.silent&&G.t-(e.dingT||0)>.25){ e.dingT=G.t; G.texts.push({x:e.x,y:e.y-e.r-14,t:0,life:.4,s:'叮',c:'#c8c4bc',word:1}); sfx('block'); } } dmg=Math.max(1,Math.round(dmg)); e.hp-=dmg; e.flash=.1; e.hitT=.14;
   if(c.src==='atk') G.stats.dmgAtk+=dmg; else G.stats.dmgDef+=dmg;
   if(o.kbx!==undefined){ const m=(o.kb||0)*1.9/(e.mass||1); e.kx+=o.kbx*m; e.ky+=o.kby*m; }
@@ -565,17 +565,17 @@ function addQi(v){ if(!G.ult) return; G.qi=Math.min(100,G.qi+v); }
 function updateQi(dt){ addQi(dt*.3); if(G.guaDeferred&&!document.getElementById('ovSlots').classList.contains('on')){ const k=G.gears.map(g=>g.id+mainEl(g)).join(); if(k!==G.deferAt) G.guaDeferred=false; }
   if(!G.ult&&G.gears.length>=MAX_SLOTS&&G.state==='play'&&!G.guaDeferred&&G.mode!=='sandbox'){ openQigua(); return; }
   if(G.ult&&G.qi>=100&&G.state==='play'){ G.qi=0; castUlt(); } }
-/* 每卦三个大招 */
+/* 每卦三象（出自《说卦传》）：自然之象 / 动物之象 / 广象 */
 const ULTS={
-  '乾':[{n:'天降铜剑',d:'二十把铜剑落在敌人头上，一剑砸一片'},{n:'金钟罩',d:'金钟罩住你 4 秒：刀枪不入，碰到钟的敌人被震飞'},{n:'万剑归宗',d:'十二把剑绕身蓄势，再一齐射出，穿透一切'}],
-  '兑':[{n:'泽',d:'脚下化成湖泽：回 35% 体力，敌人变慢；死在泽里的都算解脱'},{n:'汞湖',d:'一片水银湖，湖里的敌人被电弧一遍遍打'},{n:'喜雨',d:'下一场雨：你一直回血，敌人全被淋湿（染水银），反应接连不断'}],
-  '离':[{n:'日轮',d:'一轮烈日从你身上炸开，烧遍四周'},{n:'火龙',d:'一条火龙在敌人之间穿行，一路留下火海'},{n:'焚城',d:'全场敌人一起着火，烧得比平常快三倍'}],
-  '震':[{n:'惊雷',d:'一道雷在敌人之间连跳二十多下（导电的跳得更远）'},{n:'雷池',d:'你身边 5 秒都是雷池，雷不停劈进来的敌人'},{n:'天罚',d:'天上落下十道巨雷，专劈血最厚的'}],
-  '巽':[{n:'旋风',d:'一股旋风跟着你 5 秒，把敌人卷进来绞碎'},{n:'风行',d:'6 秒内快得像风，所过之处刮出风刃'},{n:'风刃',d:'三圈风刃螺旋着往外飞，穿透一切'}],
-  '坎':[{n:'水银洪流',d:'一道巨浪冲开全场，全部染上水银（顺手浇灭火海成蒸汽）'},{n:'漩涡',d:'在敌人最密处卷起漩涡，吸成一团再炸开'},{n:'水牢',d:'身边一圈敌人被困进水泡 3.5 秒，出来时再挨一下'}],
-  '艮':[{n:'山岳',d:'四座石山拔地而起把你护住，压碎周围；你 3 秒无敌'},{n:'落石',d:'十四块巨石砸下，落地变成挡路的石头'},{n:'不动明山',d:'5 秒站成一座山：几乎不掉血，一圈圈震开敌人'}],
-  '坤':[{n:'厚德载物',d:'全场敌人定住，你得到半管血的护盾'},{n:'地裂',d:'地面朝六个方向裂开，裂缝上的敌人重伤、定住'},{n:'归藏',d:'身边的敌人沉进地里：残血的直接解脱，你每收一个回血'}],
-  '杂':[{n:'小周天',d:'没起成卦：一圈气浪，伤害不高'},{n:'回气',d:'没起成卦：回 30% 体力'},{n:'散铜',d:'没起成卦：吸来全场铜屑，跑快 2 秒'}],
+  '乾':[{n:'天降铜剑',q:'乾为天',d:'二十把铜剑从天而降，一剑砸一片'},{n:'铜马冲阵',q:'乾为马',d:'六匹铜马排成一排冲过敌阵，撞飞一切'},{n:'金钟罩',q:'乾为金',d:'金钟罩住你 4 秒：刀枪不入，碰到钟的敌人被震飞'}],
+  '坤':[{n:'厚德载物',q:'坤为地',d:'大地托起：全场敌人定住，你得到半管血的护盾'},{n:'铜牛横冲',q:'坤为牛',d:'三头铜牛冲进敌人最密处，顶飞一路'},{n:'百俑随行',q:'坤为众',d:'召来六尊陶俑傀儡，替你挡 12 秒'}],
+  '震':[{n:'惊雷',q:'震为雷',d:'一道雷在敌人之间连跳二十多下（导电的跳得更远）'},{n:'雷龙',q:'震为龙',d:'一条雷龙绕着你飞 5 秒，见谁劈谁'},{n:'跺地',q:'震为足',d:'连跺三脚，一圈比一圈大，震晕四周'}],
+  '巽':[{n:'旋风',q:'巽为风',d:'一股旋风跟着你 5 秒，把敌人卷进来绞碎'},{n:'报晓',q:'巽为鸡',d:'一声鸡鸣，全场敌人愣住 3 秒'},{n:'墨斗巨线',q:'巽为绳直',d:'四道墨斗巨线贯穿全屏，切中的都被捆住'}],
+  '坎':[{n:'水银洪流',q:'坎为水',d:'一道巨浪冲开全场，全部染上水银（顺手浇灭火海成蒸汽）'},{n:'隐伏',q:'坎为隐伏',d:'隐身 5 秒：敌人找不到你，你的器伤害 +50%'},{n:'弓轮',q:'坎为弓轮',d:'身边转起一架弓弩轮，四面连射 4 秒'}],
+  '离':[{n:'日轮',q:'离为日',d:'一轮烈日从你身上炸开，烧遍四周'},{n:'火雉',q:'离为雉',d:'五只火雉扑向敌人最密处，落地炸成火海'},{n:'甲胄',q:'离为甲胄',d:'全身铜甲 5 秒：刀枪不入，贴身的敌人被撞飞'}],
+  '艮':[{n:'山岳',q:'艮为山',d:'四座石山拔地而起把你护住，压碎周围；你 3 秒无敌'},{n:'落石',q:'艮为小石',d:'十四块巨石砸下，落地变成挡路的石头'},{n:'门阙',q:'艮为门阙',d:'在敌人最密处四面落门，把一群关在里面砸'}],
+  '兑':[{n:'泽',q:'兑为泽',d:'脚下化成湖泽：回 35% 体力，敌人变慢；死在泽里的都算解脱'},{n:'羊群',q:'兑为羊',d:'一大群羊从屏幕一边冲过来，把敌人冲散'},{n:'大喝',q:'兑为口',d:'一声大喝，四周敌人震晕 2 秒'}],
+  '杂':[{n:'小周天',q:'未成卦',d:'没起成卦：一圈气浪，伤害不高'},{n:'回气',q:'未成卦',d:'没起成卦：回 30% 体力'},{n:'散铜',q:'未成卦',d:'没起成卦：吸来全场铜屑，跑快 2 秒'}],
 };
 function openQigua(){
   computeGua(); const gm=G.gua.match; const n=gm?gm.n:'杂'; G.state='qigua'; sfx('ult');
@@ -585,7 +585,7 @@ function openQigua(){
   const cnt=G.gua.count; const pips=EL_IDS.filter(k=>cnt[k]).map(k=>chip(k)+'×'+cnt[k]).join('　');
   document.getElementById('lvSub').innerHTML=(gm?`六格凑满，起出「${gm.n}」：${gm.f}。<br>`:'这六格的五行凑不成任何一卦，只能选一个小招。也可以先整理格子再起卦。<br>')+'身上五行：'+pips+'<br><b>一局只能选一个大招，选了就不能换。</b>';
   ULTS[n].forEach((u,i)=>{ const el=document.createElement('div'); el.className='card el'; el.style.borderColor=col; el.style.background=`linear-gradient(160deg,${col}30,rgba(24,18,13,.95) 60%)`;
-    el.innerHTML=`<span class="key">${i+1}</span><div class="tag" style="color:${col}">${gm?gm.n+'卦 · 大招':'小招'}</div><div class="nm"><span class="glyph" style="border-color:${col};color:${col};box-shadow:0 0 14px ${col}88">${gm?gm.sym:'○'}</span>${u.n}</div><div class="ds">${u.d}</div>`;
+    el.innerHTML=`<span class="key">${i+1}</span><div class="tag" style="color:${col}">${gm?'「'+u.q+'」 · 《说卦传》':'小招'}</div><div class="nm"><span class="glyph" style="border-color:${col};color:${col};box-shadow:0 0 14px ${col}88">${gm?gm.sym:'○'}</span>${u.n}</div><div class="ds">${u.d}</div>`;
     el.onclick=()=>{ G.ult={gua:n,i,n:u.n,sym:gm?gm.sym:'○'}; G.qi=60; hide('ovLevel'); document.getElementById('lvTidy').textContent='整理格子（拆下 / 挪位置，凑卦）'; G.state='play'; bigBanner((gm?gm.sym+'  ':'')+u.n,'大招已定。攒满气就放',col); G.areas.push({kind:'bagua',x:P.x,y:P.y,follow:true,r:120,life:1.6,max:1.6,col,sym:gm?gm.sym:'○'}); };
     box.appendChild(el); });
   document.getElementById('lvTidy').textContent='先整理格子，等会儿再起卦';
@@ -593,59 +593,61 @@ function openQigua(){
 }
 function castUlt(){ const u=G.ult; const col=GUA_COL[u.gua];
   const c={src:'atk',els:[],mul:1+P.lv*.07,ox:P.x,oy:P.y,mod:null,bp:null}; G.ults++;
-  bigBanner(u.sym+'  '+u.n,'',col); sfx('ult'); G.shake=14; G.hitstop=.12;
+  bigBanner(u.sym+'  '+u.n,(ULTS[u.gua][u.i]||{}).q||'',col); sfx('ult'); G.shake=14; G.hitstop=.12;
   G.areas.push({kind:'bagua',x:P.x,y:P.y,follow:true,r:120,life:1.6,max:1.6,col,sym:u.sym}); G.ultFlash={col,t:.5};
   ULTFN[u.gua][u.i](c);
 }
+function beasts(c,kind,n,o){ for(let i=0;i<n;i++) G.projs.push(mkProj({...c,mod:null},o.x(i),o.y(i),o.a(i),o.sp,o.dmg*c.mul,{pierce:999,life:o.life,maxLife:o.life,kind:'beast',beast:kind,r:o.r,kbp:o.kb,homing:!!o.homing,col:'#fff'})); }
 const ULTFN={
   '乾':[
     c=>{ for(let i=0;i<20;i++) G.queue.push({t:i*.06,fn:()=>{ const t=randEnemy(P.x,P.y,520); const x=t?t.x:P.x+rand(-300,300), y=t?t.y:P.y+rand(-300,300);
       G.areas.push({kind:'sword',x,y,life:.35,max:.35}); near(x,y,55,e=>hurt(e,55*c.mul,c,kbFrom(e,x,y,200))); G.shake=Math.max(G.shake,4); }}); },
+    c=>{ const t=densest(P.x,P.y,500); const a=t?Math.atan2(t.y-P.y,t.x-P.x):0; const px=-Math.sin(a), py=Math.cos(a);
+      beasts(c,'horse',6,{x:i=>P.x-Math.cos(a)*260+px*(i-2.5)*42,y:i=>P.y-Math.sin(a)*260+py*(i-2.5)*42,a:()=>a,sp:560,dmg:45,life:1.6,r:18,kb:320}); sfx('heavy'); G.shake=8; },
     c=>{ P.inv=Math.max(P.inv,4); G.areas.push({kind:'dome',x:P.x,y:P.y,follow:true,r:90,life:4,max:4,tick:0,c,dmg:30*c.mul}); },
-    c=>{ G.areas.push({kind:'swordring',x:P.x,y:P.y,follow:true,r:70,life:1.2,max:1.2}); G.queue.push({t:1.2,fn:()=>{ for(let i=0;i<12;i++){ const a=i/12*TAU; G.projs.push(mkProj(c,P.x+Math.cos(a)*70,P.y+Math.sin(a)*70,a,700,70*c.mul,{pierce:99,life:1,col:'#fff1b0',len:30,wid:2})); } G.shake=10; sfx('heavy'); }}); },
   ],
-  '兑':[
-    c=>{ P.hp=Math.min(P.maxhp,P.hp+P.maxhp*.35); G.areas.push({kind:'marsh',x:P.x,y:P.y,r:230,life:6,max:6,tick:0,c:{...c,src:'def'},dps:12*c.mul}); },
-    c=>{ const x=P.x,y=P.y; G.areas.push({kind:'marsh',x,y,r:240,life:6,max:6,tick:0,c:{...c,els:['shui']},dps:6*c.mul,merc:1});
-      for(let k=0;k<7;k++) G.queue.push({t:.4+k*.8,fn:()=>{ const pts=[[x,y-10]]; let n=0; near(x,y,240,e=>{ if(n<7){ n++; pts.push([e.x,e.y-8]); hurt(e,26*c.mul,c,{silent:1}); e.stunT=Math.max(e.stunT||0,.3); } }); if(n){ G.areas.push({kind:'bolt',pts,life:.3,max:.3,col:'#bfe3ff'}); sfx('zap'); } }}); },
-    c=>{ G.areas.push({kind:'rain',x:P.x,y:P.y,follow:true,r:420,life:6,max:6,tick:0,c,heal:4}); },
-  ],
-  '离':[
-    c=>{ G.areas.push({kind:'wave',x:P.x,y:P.y,R:470,r:8,life:.7,max:.7,c:{...c,els:['huo']},dmg:50*c.mul,kb:260,col:'#ffb060',hit:new Set(),sun:1}); },
-    c=>{ const a=aimAt({ox:P.x,oy:P.y}); G.projs.push(mkProj({...c,els:['huo']},P.x,P.y,a,330,40*c.mul,{life:3.4,maxLife:3.4,pierce:40,homing:true,kind:'dragon',r:16,retarget:true,trail:1})); },
-    c=>{ near(P.x,P.y,560,e=>{ if(!e.mk) e.mk={}; e.mk.huo=6; e.burnSrc='atk'; e.burnBoost=6; elFX('huo',e.x,e.y-6,false); }); G.areas.push({kind:'flash',x:P.x,y:P.y,r:560,life:.4,max:.4}); },
+  '坤':[
+    c=>{ near(P.x,P.y,520,e=>{ if(!e.boss) e.stunT=Math.max(e.stunT||0,2.6); hurt(e,30*c.mul,c,{silent:1}); }); P.shield+=P.maxhp*.5; G.areas.push({kind:'quake',x:P.x,y:P.y,r:520,life:.8,max:.8}); },
+    c=>{ for(let i=0;i<3;i++){ const t=densest(P.x,P.y,520); const a=(t?Math.atan2(t.y-P.y,t.x-P.x):rand(0,TAU))+(i-1)*.5; beasts(c,'bull',1,{x:()=>P.x,y:()=>P.y,a:()=>a,sp:400,dmg:60,life:2.2,r:24,kb:520,homing:true}); } G.shake=8; sfx('heavy'); },
+    c=>{ const fake={id:'ou',lv:4,mod:null,br:null,uid:-7,ang:0}; for(let i=0;i<6;i++){ spawnAlly(fake); const a=G.allies[G.allies.length-1]; a.life=12; a.hp=a.max=90; const an=i/6*TAU; a.x=P.x+Math.cos(an)*60; a.y=P.y+Math.sin(an)*60; } },
   ],
   '震':[
     c=>{ let cur={x:P.x,y:P.y}; const hit=new Set(); const pts=[[P.x,P.y-20]];
       for(let i=0;i<24;i++){ let best=null,bd=(cur.mk&&(cur.mk.jin>0||cur.mk.shui>0)?360:200)**2; for(const e of G.enemies){ if(e.dead||hit.has(e.id)) continue; const d=(e.x-cur.x)**2+(e.y-cur.y)**2; if(d<bd){bd=d;best=e;} } if(!best) break;
         hit.add(best.id); pts.push([best.x,best.y-8]); const b=best; G.queue.push({t:i*.03,fn:()=>hurt(b,48*c.mul,c,{silent:i%3!==0})}); cur=best; }
       G.areas.push({kind:'bolt',pts,life:.45,max:.45,col:'#a98bff'}); },
-    c=>{ G.areas.push({kind:'leichi',x:P.x,y:P.y,follow:true,r:170,life:5,max:5,tick:0,c,dmg:30*c.mul}); },
-    c=>{ const tg=G.enemies.filter(e=>!e.dead&&Math.hypot(e.x-P.x,e.y-P.y)<560).sort((a,b)=>b.hp-a.hp).slice(0,10);
-      tg.forEach((e,i)=>G.queue.push({t:i*.1,fn:()=>{ if(e.dead) return; G.areas.push({kind:'bolt',pts:[[e.x+rand(-30,30),e.y-420],[e.x+rand(-20,20),e.y-200],[e.x,e.y-8]],life:.35,max:.35,col:'#a98bff'}); hurt(e,120*c.mul,c,{}); e.stunT=Math.max(e.stunT||0,1); G.shake=Math.max(G.shake,6); sfx('zap'); }})); },
+    c=>{ G.areas.push({kind:'leilong',x:P.x,y:P.y,follow:true,r:95,life:5,max:5,tick:0,c,dmg:32*c.mul,ang:0}); },
+    c=>{ for(let k=0;k<3;k++) G.queue.push({t:k*.45,fn:()=>{ G.areas.push({kind:'wave',x:P.x,y:P.y,R:160+k*80,r:8,life:.45,max:.45,c,dmg:38*c.mul,kb:380,col:'#a98bff',stun:1,hit:new Set()}); G.shake=8+k*2; sfx('heavy'); elFX('tu',P.x,P.y,true); }}); },
   ],
   '巽':[
     c=>{ G.areas.push({kind:'tornado',x:P.x,y:P.y,follow:true,r:150,life:5,max:5,tick:0,c,dps:24*c.mul}); },
-    c=>{ P.haste=6; P.windT=6; P.windC=c; },
-    c=>{ for(let w=0;w<3;w++) G.queue.push({t:w*.25,fn:()=>{ for(let i=0;i<16;i++){ const a=i/16*TAU+w*.2; G.projs.push(mkProj(c,P.x,P.y,a,520,30*c.mul,{pierce:99,life:.9,col:'#5fe0c0',len:18,curve:2.2})); } sfx('shot'); }}); },
+    c=>{ near(P.x,P.y,620,e=>{ if(!e.boss) e.stunT=Math.max(e.stunT||0,3); hurt(e,18*c.mul,c,{silent:1}); }); G.areas.push({kind:'wave',x:P.x,y:P.y,R:620,r:8,life:.8,max:.8,c,dmg:0,kb:0,col:'#5fe0c0',hit:new Set()}); G.texts.push({x:P.x,y:P.y-50,t:0,life:1.2,s:'喔——',c:'#5fe0c0',word:1,syn:1}); },
+    c=>{ const cc={...c,bp:{root:2.2}}; for(let i=0;i<4;i++){ const a=i*Math.PI/4+G.t%1; beam(cc,P.x-Math.cos(a)*560,P.y-Math.sin(a)*560,a,1120,65*c.mul); } G.shake=10; sfx('heavy'); },
   ],
   '坎':[
     c=>{ G.areas.push({kind:'wave',x:P.x,y:P.y,R:620,r:8,life:.9,max:.9,c:{...c,els:['shui']},dmg:30*c.mul,kb:760,col:'#3f8cff',hit:new Set()}); },
-    c=>{ const t=densest(P.x,P.y,420)||{x:P.x+100,y:P.y}; G.areas.push({kind:'whirl',x:t.x,y:t.y,r:200,life:2.5,max:2.5,c,dmg:60*c.mul,done:false}); },
-    c=>{ near(P.x,P.y,300,e=>{ if(e.boss) return; e.stunT=Math.max(e.stunT||0,3.5); e.bubble=3.5; if(!e.mk) e.mk={}; e.mk.shui=4; }); G.queue.push({t:3.5,fn:()=>near(P.x,P.y,340,e=>{ if(e.bubble>0){ e.bubble=0; hurt(e,24*c.mul,c,{}); } })}); },
+    c=>{ P.hideT=5; for(let i=0;i<14;i++) G.parts.push({x:P.x+rand(-16,16),y:P.y+rand(-24,4),vx:rand(-20,20),vy:-30,t:0,life:.6,s:6,c:'rgba(63,140,255,.5)',soft:1}); },
+    c=>{ G.areas.push({kind:'wheel',x:P.x,y:P.y,follow:true,life:4,max:4,tick:0,c,ang:0}); },
+  ],
+  '离':[
+    c=>{ G.areas.push({kind:'wave',x:P.x,y:P.y,R:470,r:8,life:.7,max:.7,c:{...c,els:['huo']},dmg:50*c.mul,kb:260,col:'#ffb060',hit:new Set(),sun:1}); },
+    c=>{ for(let i=0;i<5;i++){ const t=densest(P.x,P.y,480)||randEnemy(P.x,P.y,480); const tx=t?t.x+rand(-30,30):P.x+rand(-200,200), ty=t?t.y+rand(-30,30):P.y+rand(-200,200);
+      G.projs.push({kind:'pot',bird:1,x0:P.x,y0:P.y-10,x:P.x,y:P.y,tx,ty,t:-i*.12,dur:.7,life:9,c:{...c,els:['huo'],bp:{boom:1,pool:1.3},mul:c.mul*2.2},z:0,big:true}); } },
+    c=>{ P.armorT=5; P.inv=Math.max(P.inv,5); },
   ],
   '艮':[
     c=>{ for(let i=0;i<4;i++){ const a=i*Math.PI/2+Math.PI/4; G.deps.push({kind:'mount',id:uid++,x:P.x+Math.cos(a)*105,y:P.y+Math.sin(a)*105,r:34,life:6,max:6}); }
       near(P.x,P.y,150,e=>hurt(e,42*c.mul,c,kbFrom(e,P.x,P.y,300))); P.inv=Math.max(P.inv,3); },
     c=>{ for(let i=0;i<14;i++) G.queue.push({t:i*.1,fn:()=>{ const t=randEnemy(P.x,P.y,480); const x=t?t.x:P.x+rand(-300,300), y=t?t.y:P.y+rand(-300,300);
-      G.areas.push({kind:'flash',x,y,r:50,life:.25,max:.25}); near(x,y,52,e=>hurt(e,50*c.mul,c,kbFrom(e,x,y,180))); G.deps.push({kind:'rock',id:uid++,x,y,r:20,life:4,max:4}); elFX('tu',x,y,false); G.shake=Math.max(G.shake,5); }}); },
-    c=>{ P.rootT=5; G.areas.push({kind:'mountain',x:P.x,y:P.y,follow:true,life:5,max:5,tick:0,c,dmg:35*c.mul}); },
+      G.areas.push({kind:'flash',x,y,r:50,life:.25,max:.25}); near(x,y,52,e=>hurt(e,50*c.mul,c,kbFrom(e,x,y,180))); G.deps.push({kind:'rock',id:uid++,x,y,r:20,life:4,max:4,drop:.12}); elFX('tu',x,y,false); G.shake=Math.max(G.shake,5); }}); },
+    c=>{ const t=densest(P.x,P.y,460)||{x:P.x+160,y:P.y}; const S=110;
+      for(let i=0;i<4;i++){ const a=i*Math.PI/2; G.deps.push({kind:'wall',id:uid++,x:t.x+Math.cos(a)*S,y:t.y+Math.sin(a)*S,ang:a+Math.PI/2,len:S*2+16,th:18,life:6,max:6,c,mul:c.mul*2,rise:.25}); }
+      G.queue.push({t:.3,fn:()=>{ near(t.x,t.y,S,e=>hurt(e,40*c.mul,c,{})); G.shake=8; sfx('heavy'); }}); G.queue.push({t:1.5,fn:()=>near(t.x,t.y,S,e=>hurt(e,40*c.mul,c,{}))}); },
   ],
-  '坤':[
-    c=>{ near(P.x,P.y,520,e=>{ if(!e.boss) e.stunT=Math.max(e.stunT||0,2.6); hurt(e,30*c.mul,c,{silent:1}); }); P.shield+=P.maxhp*.5; G.areas.push({kind:'quake',x:P.x,y:P.y,r:520,life:.8,max:.8}); },
-    c=>{ for(let i=0;i<6;i++){ const a=i/6*TAU+rand(-.1,.1); for(let s=1;s<=7;s++) G.queue.push({t:s*.07,fn:()=>{ const x=P.x+Math.cos(a)*s*55, y=P.y+Math.sin(a)*s*55; G.areas.push({kind:'crack',x,y,a,life:1.2,max:1.2}); near(x,y,34,e=>{ hurt(e,60*c.mul,c,{silent:1}); if(!e.boss) e.stunT=Math.max(e.stunT||0,1.5); }); if(s%2) elFX('tu',x,y,false); }}); } G.shake=10; },
-    c=>{ let n=0; near(P.x,P.y,270,e=>{ if(e.boss){ hurt(e,60*c.mul,c,{}); return; } if(e.hp<e.maxhp*.4){ n++; e.sink=.6; G.queue.push({t:.5,fn:()=>{ if(!e.dead){ e.hp=0; killEnemy(e,'def'); } }}); } else hurt(e,50*c.mul,{...c,src:'def'},{}); });
-      P.hp=Math.min(P.maxhp,P.hp+n*2); G.areas.push({kind:'quake',x:P.x,y:P.y,r:270,life:.7,max:.7}); },
+  '兑':[
+    c=>{ P.hp=Math.min(P.maxhp,P.hp+P.maxhp*.35); G.areas.push({kind:'marsh',x:P.x,y:P.y,r:230,life:6,max:6,tick:0,c:{...c,src:'def'},dps:12*c.mul}); },
+    c=>{ const dir=Math.random()<.5?1:-1; beasts(c,'sheep',14,{x:i=>P.x-dir*(W/2/ZOOM+60)-rand(0,160)*dir,y:i=>P.y+(i/13-.5)*H/ZOOM*.8+rand(-20,20),a:()=>dir>0?0:Math.PI,sp:330,dmg:16,life:3.6,r:15,kb:460}); sfx('react'); },
+    c=>{ near(P.x,P.y,420,e=>{ if(!e.boss) e.stunT=Math.max(e.stunT||0,2); hurt(e,40*c.mul,c,kbFrom(e,P.x,P.y,260)); }); G.areas.push({kind:'wave',x:P.x,y:P.y,R:420,r:8,life:.5,max:.5,c,dmg:0,kb:0,col:'#ff8fc6',hit:new Set()}); G.texts.push({x:P.x,y:P.y-50,t:0,life:1.2,s:'喝！',c:'#ff8fc6',word:1,syn:1}); G.shake=12; },
   ],
   '杂':[
     c=>{ G.areas.push({kind:'wave',x:P.x,y:P.y,R:220,r:8,life:.5,max:.5,c,dmg:18*c.mul,kb:300,col:'#bfb6a6',hit:new Set()}); },
@@ -707,7 +709,7 @@ function updateEnemies(dt){
     if(e.amal>0){ e.amal-=dt; e.amT=(e.amT||0)+dt; if(e.amT>=.35){ e.amT=0; hurt(e,5,{src:e.amalSrc||'atk',els:[],ox:e.x,oy:e.y},{noel:1,silent:1,dot:'#d6e2ea'}); if(e.dead) continue; } }
     if(e.poison>0){ e.poison-=dt; e.poT=(e.poT||0)+dt; if(e.poT>=.4){ e.poT=0; hurt(e,5,{src:e.poSrc||'atk',els:[],ox:e.x,oy:e.y},{noel:1,silent:1,dot:'#9fe07a'}); if(e.dead) continue; } }
     let blind=false; for(const a of G.areas){ if((a.kind==='fog'||a.kind==='steam')&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){ blind=true; if(a.kind==='fog'){ e.poison=Math.max(e.poison||0,1.5); e.poSrc=a.c.src; } break; } }
-    e.blind=blind;
+    e.blind=blind||(P.hideT>0&&!e.boss);
     if(e.brittle>0) e.brittle-=dt; if(e.slowT>0) e.slowT-=dt; if(e.stunT>0) e.stunT-=dt;
     for(const a of G.areas){ if(a.kind==='mud'&&Math.hypot(a.x-e.x,a.y-e.y)<a.r) e.slowT=Math.max(e.slowT,.3); }
     // 目标：被傀儡嘲讽
@@ -770,7 +772,7 @@ function bossAI(e,dt,dx,dy,d){
 
 /* ---------------- 主角受伤 ---------------- */
 function hitPlayer(dmg,src){
-  if(P.inv>0) return;
+  if(P.inv>0||P.hideT>0) return;
   const dr=playerDR();
   P.inv=.55; P.flash=.15; G.shake=Math.max(G.shake,6); G.hitstop=Math.max(G.hitstop,.05); sfx('hurt');
   let d=dmg*(1-dr); if(P.shield>0){ const a=Math.min(P.shield,d); P.shield-=a; d-=a; G.texts.push({x:P.x,y:P.y-30,t:0,life:.5,s:'挡',c:'#cfe3ee',word:1}); }
@@ -797,7 +799,7 @@ function mkProj(c,x,y,a,sp,dmg,o={}){ return Object.assign({x,y,vx:Math.cos(a)*s
 function updateProjs(dt){
   for(const p of G.projs){
     p.age+=dt; p.life-=dt;
-    if(p.kind==='pot'){ p.t+=dt; const k=p.t/p.dur; p.x=p.x0+(p.tx-p.x0)*k; p.y=p.y0+(p.ty-p.y0)*k; p.z=Math.sin(Math.PI*k)*(p.hop?35:70);
+    if(p.kind==='pot'){ p.t+=dt; if(p.t<0) continue; const k=p.t/p.dur; p.x=p.x0+(p.tx-p.x0)*k; p.y=p.y0+(p.ty-p.y0)*k; p.z=Math.sin(Math.PI*k)*(p.hop?35:70);
       if(k>=1){ const boom=bp(p.c,'boom',0);
         if(boom){ near(p.tx,p.ty,75,e=>hurt(e,22*p.c.mul,p.c,kbFrom(e,p.tx,p.ty,220))); G.areas.push({kind:'ring',x:p.tx,y:p.ty,r:75,life:.3,max:.3,col:ELC.huo}); burst(p.tx,p.ty,'#ffb060',12); G.shake=Math.max(G.shake,4); sfx('heavy'); firePool(p.c,p.tx,p.ty,p.big,true); }
         else firePool(p.c,p.tx,p.ty,p.big);
@@ -1043,6 +1045,9 @@ function updateAreas(dt){
     else if(a.kind==='tornado'){ a.tick-=dt; near(a.x,a.y,a.r,(e,dx,dy)=>{ if(e.boss) return; const d=Math.hypot(dx,dy)||1; e.kx+=(-dx/d*260+(-dy/d)*220)*dt*6; e.ky+=(-dy/d*260+(dx/d)*220)*dt*6; });
       if(a.tick<=0){ a.tick=.25; near(a.x,a.y,a.r,e=>hurt(e,a.dps*.25,a.c,{silent:1})); } }
     else if(a.kind==='marsh'){ a.tick-=dt; if(a.tick<=0){ a.tick=.4; near(a.x,a.y,a.r,e=>{ e.slowT=Math.max(e.slowT,.5); hurt(e,a.dps*.4,a.c,{silent:1}); }); } }
+    else if(a.kind==='leilong'){ a.ang+=dt*3.2; a.tick-=dt; const hx=a.x+Math.cos(a.ang)*a.r, hy=a.y+Math.sin(a.ang)*a.r; a.hx=hx; a.hy=hy;
+      if(a.tick<=0){ a.tick=.18; const t=nearest(hx,hy,170); if(t){ G.areas.push({kind:'bolt',pts:[[hx,hy-10],[(hx+t.x)/2+rand(-12,12),(hy+t.y)/2-10],[t.x,t.y-8]],life:.18,max:.18,col:'#a98bff'}); hurt(t,a.dmg,a.c,{silent:1}); if(!t.boss) t.stunT=Math.max(t.stunT||0,.3); } } }
+    else if(a.kind==='wheel'){ a.ang+=dt*4; a.tick-=dt; if(a.tick<=0){ a.tick=.1; for(const o of [0,Math.PI]){ const an=a.ang+o; G.projs.push(mkProj({...a.c,mod:null},a.x+Math.cos(an)*40,a.y+Math.sin(an)*40,an,620,22*a.c.mul,{pierce:2,life:.8,col:'#9fd8ff',len:14})); } } }
     else if(a.kind==='dome'){ a.tick-=dt; if(a.tick<=0){ a.tick=.3; near(a.x,a.y,a.r,e=>hurt(e,a.dmg,a.c,{...kbFrom(e,a.x,a.y,420),silent:1})); } }
     else if(a.kind==='rain'){ a.tick-=dt; P.hp=Math.min(P.maxhp,P.hp+a.heal*dt); if(a.tick<=0){ a.tick=.12; const t=randEnemy(a.x,a.y,a.r); if(t){ hurt(t,8*a.c.mul,{...a.c,els:['shui']},{silent:1}); } } for(let i=0;i<3;i++) G.parts.push({x:P.x+rand(-W/2,W/2)/ZOOM,y:P.y+rand(-H/2,H/2)/ZOOM-30,vx:-40,vy:520,t:0,life:.25,s:1.5,c:'rgba(150,200,255,.7)',soft:1}); }
     else if(a.kind==='leichi'){ a.tick-=dt; if(a.tick<=0){ a.tick=.22; const t=randEnemy(a.x,a.y,a.r); if(t){ G.areas.push({kind:'bolt',pts:[[t.x+rand(-20,20),t.y-160],[t.x+rand(-10,10),t.y-70],[t.x,t.y-8]],life:.2,max:.2,col:'#a98bff'}); hurt(t,a.dmg,a.c,{silent:1}); t.stunT=Math.max(t.stunT||0,.4); sfx('zap'); } } }
@@ -1137,7 +1142,7 @@ function renderTidy(){ computeGua(); const box=document.getElementById('slotEd')
     box.appendChild(el); });
   const c=G.gua.count; document.getElementById('sedGua').innerHTML='身上五行：'+EL_IDS.map(k=>chip(k)+'×'+c[k]).join('　')+'<br>'+(G.ult?`大招已定：${G.ult.sym} ${G.ult.n}（一局只有一个）`:G.gears.length>=MAX_SLOTS?(G.gua.match?`现在能起「${G.gua.match.sym} ${G.gua.match.n}」`:'现在起不成卦'):`再凑 ${MAX_SLOTS-G.gears.length} 格，六格满了起卦`); }
 function renderGuaRef(){ const box=document.getElementById('guaRef'); const all=G.mode==='sandbox';
-  box.innerHTML=GUA_LIST.map(g=>{ const k=KNOWN.has(g.n)||all; return `<div style="border:1px solid ${GUA_COL[g.n]}66;border-radius:8px;padding:6px;background:${GUA_COL[g.n]}14"><b style="color:${GUA_COL[g.n]};font-size:16px">${g.sym} ${g.n}</b> · ${g.x}<br>${k?g.f:'公式：？？？（起出过才知道）'}<br><span style="color:var(--dim)">${k?ULTS[g.n].map(u=>u.n).join(' / '):'三个大招：？？？'}</span></div>`; }).join(''); }
+  box.innerHTML=GUA_LIST.map(g=>{ const k=KNOWN.has(g.n)||all; return `<div style="border:1px solid ${GUA_COL[g.n]}66;border-radius:8px;padding:6px;background:${GUA_COL[g.n]}14"><b style="color:${GUA_COL[g.n]};font-size:16px">${g.sym} ${g.n}</b> · ${g.x}<br>${k?g.f:'公式：？？？（起出过才知道）'}<br><span style="color:var(--dim)">${k?ULTS[g.n].map(u=>u.q.slice(1)+'·'+u.n).join(' / '):'三象：？？？'}</span></div>`; }).join(''); }
 document.getElementById('sedDone').onclick=()=>{ hide('ovSlots'); if(G&&G.state==='levelup') openLevel(); };
 document.getElementById('lvTidy').onclick=()=>{ if(G.state==='qigua'){ hide('ovLevel'); G.state='play'; G.guaDeferred=true; G.deferAt=G.gears.map(g=>g.id+mainEl(g)).join(); document.getElementById('lvTidy').textContent='整理格子（拆下 / 挪位置，凑卦）'; openTidy(); return; } openTidy(); };
 function finishPick(){ G.pendingLv--; sfx('level'); refreshSlots(); if(G.pendingLv>0) openLevel(); else { hide('ovLevel'); G.state='play'; } }
@@ -1187,7 +1192,7 @@ function renderTitle(){ const r=loadRec(), b=r.best;
   document.getElementById('tGuaN').textContent=`（起出 ${GUA_LIST.filter(g=>KNOWN.has(g.n)).length} / 8）`;
   document.getElementById('tGua').innerHTML=GUA_LIST.map(g=>{ const k=KNOWN.has(g.n), c=GUA_COL[g.n];
     if(!k) return `<div class="tg unk"><b>${g.sym} ？</b><br>还没起出过<br>配比：？？？</div>`;
-    const used=(r.used||{})[g.n]||{}; return `<div class="tg" style="border:1px solid ${c}77;background:${c}14"><b style="color:${c}">${g.sym} ${g.n}</b> · ${g.x}<br>${g.f}<br>${ULTS[g.n].map(u=>`<span style="color:${used[u.n]?c:'var(--dim)'}">${u.n}${used[u.n]?'×'+used[u.n]:''}</span>`).join(' / ')}</div>`; }).join(''); }
+    const used=(r.used||{})[g.n]||{}; return `<div class="tg" style="border:1px solid ${c}77;background:${c}14"><b style="color:${c}">${g.sym} ${g.n}</b> · ${g.x}<br>${g.f}<br>${ULTS[g.n].map(u=>`<span style="color:${used[u.n]?c:'var(--dim)'}">${u.q.slice(1)}·${u.n}${used[u.n]?'×'+used[u.n]:''}</span>`).join(' / ')}</div>`; }).join(''); }
 function showResult(win){
   hide('ovChest'); G.state='result'; const rec=recordRun(win||G.bossDead);
   document.getElementById('resTitle').textContent= win||G.bossDead?'逃上了一层':'倒在了墓里';
@@ -1296,6 +1301,8 @@ function update(dt){
   P.haste=Math.max(0,P.haste-dt); if(P.shield>0) P.shield=Math.max(0,P.shield-dt*2);
   if(P.windT>0){ P.windT-=dt; P.wk=(P.wk||0)-dt; if(P.wk<=0&&P.moving){ P.wk=.08; G.areas.push({kind:'trail',x:P.x,y:P.y,r:26,life:.6,max:.6,tick:0,dps:60*P.windC.mul,c:P.windC,gust:1}); } }
   if(P.rootT>0) P.rootT-=dt;
+  if(P.hideT>0) P.hideT-=dt;
+  if(P.armorT>0){ P.armorT-=dt; P.ak=(P.ak||0)-dt; if(P.ak<=0){ P.ak=.3; near(P.x,P.y,P.r+22,e=>hurt(e,25*(1+P.lv*.07),{src:'def',els:[],ox:P.x,oy:P.y,mul:1},kbFrom(e,P.x,P.y,320))); } }
   const lu=hasGear('lu'); const mv=moveVec(); const sp=168*(lu&&(bpOf(lu)||{}).spd?bpOf(lu).spd:1)*(P.haste>0?1.3:1);
   P.vx+=(mv.x*sp-P.vx)*Math.min(1,dt*22); P.vy+=(mv.y*sp-P.vy)*Math.min(1,dt*22);
   if(P.rootT>0){ P.vx=0; P.vy=0; }
@@ -1409,9 +1416,10 @@ function drawFigure(x,y,s,cols,phase,moving,face,flash,extra){
   cx.restore();
 }
 function drawPlayer(){ const blink=P.inv>0&&Math.floor(G.t*20)%2===0;
-  if(blink) cx.globalAlpha=.55;
+  if(blink) cx.globalAlpha=.55; if(P.hideT>0) cx.globalAlpha=.28;
   drawFigure(P.x,P.y,1.15,{body:'#34404e',head:'#d9b58c',leg:'#232a33',arm:'#d4a64a',arm2:'#34404e',hair:'#14110f',belt:'#d4a64a'},P.phase,P.moving,P.face,0);
   cx.globalAlpha=1;
+  if(P.armorT>0){ cx.strokeStyle=`rgba(255,140,60,${.5+.3*Math.sin(G.t*12)})`; cx.lineWidth=4; cx.beginPath(); cx.arc(P.x,P.y-8,22,0,TAU); cx.stroke(); cx.fillStyle='rgba(255,160,70,.15)'; cx.fill(); }
   if(P.shield>0){ cx.strokeStyle=`rgba(200,225,240,${.35+.2*Math.sin(G.t*6)})`; cx.lineWidth=3; cx.beginPath(); cx.arc(P.x,P.y-8,24,0,TAU); cx.stroke(); }
   const lu=hasGear('lu'); if(lu&&lu.mod==='boomer'){ cx.strokeStyle='rgba(255,140,60,.5)'; cx.lineWidth=5; cx.beginPath(); cx.arc(P.x,P.y,70,0,TAU); cx.stroke(); }
   const ci=hasGear('ci'); if(ci&&ci.pts2){ for(const [x,y] of ci.pts2){ cx.strokeStyle=`rgba(232,211,160,${.18+.08*Math.sin(G.t*4)})`; cx.lineWidth=2; cx.setLineDash([4,6]); cx.beginPath(); cx.arc(x,y,ci.auraR,G.t,G.t+TAU); cx.stroke(); cx.setLineDash([]); } } }
@@ -1530,10 +1538,19 @@ function drawOrbiters(g){ const p=bpOf(g)||{}; const fire=g.fireT>0||p.el==='huo
       if(spiky){ cx.strokeStyle='#0c0806'; cx.lineWidth=2; for(let i=0;i<6;i++){ const an=i/6*TAU+G.t*3; line(q.x+Math.cos(an)*11*s2,q.y+Math.sin(an)*11*s2,q.x+Math.cos(an)*16*s2,q.y+Math.sin(an)*16*s2); } } } } }
 function drawProj(p){
   if(p.kind==='bee'){ const sz=p.size||1; cx.save(); cx.translate(p.x,p.y); cx.rotate(Math.atan2(p.vy,p.vx)); cx.scale(sz,sz); outlineFill(()=>{cx.beginPath();cx.ellipse(0,0,5,3,0,0,TAU);},p.c.els.includes('shui')?'#cfdbe2':'#d6b35a',1.5); cx.fillStyle='rgba(255,255,255,.6)'; cx.fillRect(-2,-5+Math.sin(G.t*60)*1,3,2); cx.restore(); return; }
+  if(p.kind==='beast'){ const a=Math.atan2(p.vy,p.vx), dir=Math.cos(a)>=0?1:-1, bob=Math.abs(Math.sin(G.t*18+p.x*.05))*3;
+    cx.fillStyle='rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(p.x,p.y+p.r*.6,p.r,p.r*.35,0,0,TAU); cx.fill();
+    cx.save(); cx.translate(p.x,p.y-bob); cx.scale(dir,1);
+    if(p.beast==='sheep'){ outlineFill(()=>{cx.beginPath();cx.arc(0,-6,11,0,TAU);},'#f1ece0',2); outlineFill(()=>{cx.beginPath();cx.arc(11,-8,5,0,TAU);},'#3a3028',2); cx.strokeStyle='#0c0806'; cx.lineWidth=2.5; line(-5,3,-5,9); line(5,3,5,9); }
+    else { const big=p.beast==='bull', col=big?'#7a5a3a':'#c9973f', L=big?24:20; outlineFill(()=>{cx.beginPath();cx.ellipse(0,-8,L,big?12:9,0,0,TAU);},col,2.5);
+      outlineFill(()=>{cx.beginPath();cx.ellipse(L-2,big?-14:-18,big?9:7,big?8:6,-.4,0,TAU);},col,2.5); cx.strokeStyle='#0c0806'; cx.lineWidth=3; const sw=Math.sin(G.t*20)*5; line(-L*.6,0,-L*.6-sw,10); line(L*.5,0,L*.5+sw,10);
+      if(big){ cx.strokeStyle='#efe4cf'; cx.lineWidth=3; line(L+2,-20,L+10,-26); line(L-4,-21,L-2,-30); } else { cx.strokeStyle='#0c0806'; cx.lineWidth=2; line(L-6,-24,L-12,-30); } }
+    cx.restore(); return; }
   if(p.kind==='dragon'){ const a=Math.atan2(p.vy,p.vx); cx.save(); cx.translate(p.x,p.y); cx.rotate(a); outlineFill(()=>{cx.beginPath();cx.ellipse(0,0,20,10,0,0,TAU);},'#ff4d2e',3); cx.fillStyle='#ffd27a'; cx.beginPath(); cx.arc(10,-3,3,0,TAU); cx.fill(); cx.restore(); return; }
   if(p.kind==='hammer'){ cx.save(); cx.translate(p.x,p.y); cx.rotate(G.t*16); outlineFill(()=>rr(-11,-8,22,16,3),'#c9973f'); cx.restore(); return; }
   if(p.kind==='drop'){ outlineFill(()=>{cx.beginPath();cx.arc(p.x,p.y,p.r,0,TAU);},'#d6e2ea',1.5); cx.fillStyle='#fff'; cx.beginPath(); cx.arc(p.x-p.r*.3,p.y-p.r*.3,p.r*.3,0,TAU); cx.fill(); return; }
   if(p.lit&&Math.random()<.5) G.parts.push({x:p.x,y:p.y,vx:-p.vx*.1,vy:-p.vy*.1-20,t:0,life:.25,s:3,c:'rgba(255,150,60,.9)',soft:1});
+  if(p.kind==='pot'&&p.bird){ if(p.t<0) return; cx.fillStyle='rgba(0,0,0,.3)'; ell(p.x,p.y,7,3); cx.save(); cx.translate(p.x,p.y-p.z); cx.rotate(Math.atan2(p.ty-p.y0,p.tx-p.x0)); outlineFill(()=>{cx.beginPath();cx.moveTo(14,0);cx.lineTo(-8,-10);cx.lineTo(-4,0);cx.lineTo(-8,10);cx.closePath();},'#ff6a2a',2); cx.restore(); if(Math.random()<.6) G.parts.push({x:p.x,y:p.y-p.z,vx:0,vy:-20,t:0,life:.3,s:3,c:'rgba(255,170,70,.9)',soft:1}); return; }
   if(p.kind==='pot'){ cx.fillStyle='rgba(0,0,0,.35)'; ell(p.x,p.y,5,2); outlineFill(()=>{cx.beginPath();cx.arc(p.x,p.y-p.z,6,0,TAU);},'#7a4a2a',2); cx.fillStyle=ELC.huo; cx.beginPath(); cx.arc(p.x,p.y-p.z-6,2.5,0,TAU); cx.fill(); return; }
   const a=Math.atan2(p.vy,p.vx), L=p.len||14; cx.lineCap='round';
   const wd=p.wid||1; cx.strokeStyle='#0c0806'; cx.lineWidth=4.5*wd; line(p.x,p.y,p.x-Math.cos(a)*L,p.y-Math.sin(a)*L);
@@ -1555,6 +1572,8 @@ function drawArea(a){ const k=1-a.life/a.max, f=a.life/a.max;
   else if(a.kind==='elring'){ cx.strokeStyle=hexA(a.col,.9*f); cx.lineWidth=(a.thin?2:6)*f+1; cx.beginPath(); cx.arc(a.x,a.y,a.r*(.35+.65*k),0,TAU); cx.stroke(); if(!a.thin){ cx.fillStyle=hexA(a.col,.18*f); cx.fill(); } }
   else if(a.kind==='bagua'){ drawBaguaWheel(a.x,a.y,a.r*(.6+.4*Math.min(1,k*3)),a.col,f,a.sym,k); }
   else if(a.kind==='bolt'){ cx.lineCap='round'; cx.lineJoin='round'; for(const [w,col] of [[7,a.col?hexA(a.col,.45*f):`rgba(120,170,255,${.5*f})`],[2.5,`rgba(255,250,235,${f})`]]){ cx.strokeStyle=col; cx.lineWidth=w; cx.beginPath(); a.pts.forEach(([x,y],i)=>{ const jx=x+rand(-5,5), jy=y+rand(-5,5); i?cx.lineTo(jx,jy):cx.moveTo(x,y); }); cx.stroke(); } }
+  else if(a.kind==='leilong'&&a.hx!==undefined){ for(let i=0;i<8;i++){ const an=a.ang-i*.18; const x=a.x+Math.cos(an)*a.r, y=a.y+Math.sin(an)*a.r; cx.fillStyle=i?`rgba(169,139,255,${.8-i*.09})`:'#efe8ff'; cx.beginPath(); cx.arc(x,y-10,(i?9:12)-i*.6,0,TAU); cx.fill(); } }
+  else if(a.kind==='wheel'){ cx.save(); cx.translate(a.x,a.y); cx.rotate(a.ang); cx.strokeStyle='#0c0806'; cx.lineWidth=6; cx.beginPath(); cx.arc(0,0,40,0,TAU); cx.stroke(); cx.strokeStyle='#9fd8ff'; cx.lineWidth=3; cx.beginPath(); cx.arc(0,0,40,0,TAU); cx.stroke(); for(let i=0;i<6;i++){ const an=i/6*TAU; line(0,0,Math.cos(an)*40,Math.sin(an)*40); } cx.restore(); }
   else if(a.kind==='dome'){ cx.fillStyle=`rgba(255,225,140,${.12+.06*Math.sin(G.t*8)})`; cx.strokeStyle=`rgba(255,235,170,${.7*Math.min(1,a.life)})`; cx.lineWidth=3; cx.beginPath(); cx.arc(a.x,a.y-8,a.r,0,TAU); cx.fill(); cx.stroke(); }
   else if(a.kind==='swordring'){ for(let i=0;i<12;i++){ const an=i/12*TAU+G.t*4; const x=a.x+Math.cos(an)*a.r, y=a.y+Math.sin(an)*a.r; cx.save(); cx.translate(x,y); cx.rotate(an); cx.strokeStyle='#0c0806'; cx.lineWidth=5; line(-14,0,14,0); cx.strokeStyle='#fff1b0'; cx.lineWidth=2.5; line(-14,0,14,0); cx.restore(); } }
   else if(a.kind==='leichi'){ cx.strokeStyle=`rgba(169,139,255,${.35+.2*Math.sin(G.t*20)})`; cx.lineWidth=2; cx.setLineDash([6,8]); cx.beginPath(); cx.arc(a.x,a.y,a.r,0,TAU); cx.stroke(); cx.setLineDash([]); }
