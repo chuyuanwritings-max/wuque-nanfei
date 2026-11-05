@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>墨 1.3（原型）</title>
+<title>墨 1.4（原型）</title>
 <style>
 @font-face{font-family:"BM-Long";src:local("ChillLongCangKaiShu"),local("寒蝉龙藏楷书"),url("../../../00_字体/标题_寒蝉龙藏楷书/ChillLongCangKaiShu_Regular.otf")}
 @font-face{font-family:"BM-Hei";src:local("FZHei-B01S"),local("方正黑体简体"),url("../../../00_字体/界面_方正黑体/方正黑体简体.ttf")}
@@ -11,7 +11,7 @@
 :root{
   --bg:#120e0b; --ink:#efe4cf; --dim:#a8977c; --bronze:#d4a64a; --clay:#b8743f;
   --panel:rgba(24,18,13,.94); --line:rgba(239,228,207,.16);
-  --jin:#d4a64a; --mu:#86ad5f; --shui:#c9d6df; --huo:#ef6a3a; --tu:#c07a44;
+  --jin:#ffd23f; --mu:#4fd36b; --shui:#3fb0ff; --huo:#ff4d2e; --tu:#c98a3e;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);overflow:hidden;
@@ -36,6 +36,19 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   cursor:pointer;transition:transform .1s,border-color .15s;position:relative;text-align:left}
 .card:hover{transform:translateY(-3px);border-color:rgba(212,166,74,.7)}
 .card .tag{font-size:12px;color:var(--dim);letter-spacing:.1em}
+.card.el{border-width:2px;border-left-width:6px}
+.card.part{background:repeating-linear-gradient(135deg,rgba(150,165,180,.06) 0 8px,rgba(0,0,0,0) 8px 16px),#15181c;border:2px dashed #8fa0b2;border-radius:6px}
+.card.part .tag{color:#9fb3c8}
+.card.part .glyph{border-radius:4px}
+.chip{display:inline-block;font-size:12px;padding:1px 7px;border-radius:9px;margin-right:6px;color:#14100c;font-weight:bold;letter-spacing:0}
+.pgl{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border:2px solid #8fa0b2;color:#cfdbe6;border-radius:4px;font-family:"BM-Long","BM-Kai",serif;font-size:20px;background:#0f1215;position:relative}
+.pgl::after{content:"⚙";position:absolute;right:-7px;bottom:-8px;font-size:13px;color:#8fa0b2}
+@media (max-width:640px){ #guaRef{grid-template-columns:repeat(2,minmax(0,1fr))!important} }
+#slotEd{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+.sed{width:132px;background:var(--panel);border:1.5px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center}
+.sed .nm{font-family:"BM-Long","BM-Kai",serif;font-size:18px;margin:6px 0}
+.sed .row2{display:flex;gap:4px;justify-content:center}
+.sed button{font:inherit;font-size:13px;background:#2a2018;color:var(--ink);border:1px solid var(--line);border-radius:7px;padding:4px 7px;cursor:pointer}
 .card .nm{font-family:"BM-Long","BM-Kai",serif;font-size:28px;margin:4px 0 6px;display:flex;align-items:center;gap:10px}
 .card .ds{font-size:14px;line-height:1.65;color:#d9ccb4}
 .card .key{position:absolute;right:12px;top:10px;color:var(--dim);font-size:12px;font-family:monospace}
@@ -104,7 +117,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <!-- 开始 -->
 <div id="ovTitle" class="ov on dark">
   <div class="title">墨</div>
-  <div class="sub">原型 1.3<br>你是被封进始皇陵的墨家工匠。只管走位，器与守自动出手。</div>
+  <div class="sub">原型 1.4<br>你是被封进始皇陵的墨家工匠。只管走位，器与守自动出手。</div>
   <button class="btn" data-act="start">开始 · 第一层（3 分钟）</button>
   <button class="btn ghost" data-act="sandbox">试验台 · 随意搭配器、守、零件</button>
   <div class="hint">电脑：WASD 或方向键走位，Esc 暂停，1 / 2 / 3 选卡<br>手机：按住屏幕任意处拖动走位</div>
@@ -116,6 +129,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   <div class="h2">工具包</div>
   <div class="sub" style="margin:0" id="lvSub">选一样</div>
   <div class="cards" id="lvCards"></div>
+  <button class="btn small ghost" id="lvTidy" style="margin-top:14px">整理格子（拆下 / 挪位置，凑卦）</button>
 </div>
 
 <!-- 宝匣 -->
@@ -133,6 +147,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 <div id="ovPause" class="ov dark">
   <div class="h2">暂停</div>
   <button class="btn" data-act="resume">继续</button>
+  <button class="btn ghost" data-act="tidy">整理格子（拆下 / 挪位置，凑卦）</button>
   <button class="btn ghost" data-act="restart">重开这一层</button>
   <button class="btn ghost" data-act="title">回到开始</button>
   <div style="margin-top:10px">
@@ -174,6 +189,13 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
   </div>
 </div>
 
+<div id="ovSlots" class="ov dark" style="z-index:12;overflow:auto;justify-content:flex-start">
+  <div class="h2">整理格子</div>
+  <div class="sub" style="margin:0" id="sedSub">器是阳爻 ⚊，守是阴爻 ⚋。前三格是下卦，后三格是上卦。拆下的东西就没了。</div>
+  <div id="slotEd"></div><div class="sub" id="sedGua" style="margin:4px 0 10px"></div>
+  <div id="guaRef" style="display:grid;grid-template-columns:repeat(4,minmax(0,150px));gap:6px;margin:0 0 12px;font-size:12px;color:#d9ccb4"></div>
+  <button class="btn" id="sedDone">好了</button>
+</div>
 <script>
 "use strict";
 /* =========================================================
@@ -183,7 +205,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
    ========================================================= */
 const TAU=Math.PI*2, rand=(a,b)=>a+Math.random()*(b-a), clamp=(v,a,b)=>v<a?a:v>b?b:v;
 const pick=a=>a[(Math.random()*a.length)|0];
-const ELC={jin:'#d4a64a',mu:'#86ad5f',shui:'#c9d6df',huo:'#ef6a3a',tu:'#c07a44'};
+const ELC={jin:'#ffd23f',mu:'#4fd36b',shui:'#3fb0ff',huo:'#ff4d2e',tu:'#c98a3e'};
 const ELN={jin:'金',mu:'木',shui:'水银',huo:'火',tu:'土'};
 const LAYER_TIME=180, MAX_SLOTS=6, MAX_LV=5;
 
@@ -418,7 +440,7 @@ function hurt(e,dmg,c,o={}){
   if(e.dead) return; if(e.brittle>0) dmg*=1.6; dmg=Math.max(1,Math.round(dmg)); e.hp-=dmg; e.flash=.1; e.hitT=.14;
   if(c.src==='atk') G.stats.dmgAtk+=dmg; else G.stats.dmgDef+=dmg;
   if(o.kbx!==undefined){ const m=(o.kb||0)*1.9/(e.mass||1); e.kx+=o.kbx*m; e.ky+=o.kby*m; }
-  if(!o.silent||Math.random()<.3) hitFX(e,dmg,o);
+  if(!o.silent||Math.random()<.3) hitFX(e,dmg,o,c.els&&c.els[0]);
   if(numOn&&(dmg>=4||e.boss||o.dot)) G.texts.push({x:e.x+rand(-8,8),y:e.y-e.r-8,t:0,life:o.dot?.5:.6,s:String(dmg),c:o.dot||(dmg>=30?'#ffd27a':c.src==='def'?'#cfe3ee':'#f3e6c8'),big:dmg>=18&&!o.dot,num:1,small:!!o.dot});
   if(!o.noel&&c.els.length){ const prev={...(e.mk||{})}; for(const el of c.els) applyEl(e,el,c,prev); }
   if(!o.silent) sfx('hit');
@@ -426,9 +448,9 @@ function hurt(e,dmg,c,o={}){
   if(e.hp<=0) killEnemy(e,c.src);
 }
 const MAT={yong:'#b5683f',gan:'#a39886',gong:'#a5603c',jian:'#7e5034',shou:'#8a867c'};
-function hitFX(e,dmg,o){ const ang=o.kbx!==undefined?Math.atan2(o.kby,o.kbx):rand(0,TAU);
+function hitFX(e,dmg,o,el){ const ang=o.kbx!==undefined?Math.atan2(o.kby,o.kbx):rand(0,TAU);
   const hx=e.x-Math.cos(ang)*e.r*.6, hy=e.y-e.r*.4-Math.sin(ang)*e.r*.4;
-  G.parts.push({x:hx,y:hy,vx:0,vy:0,t:0,life:.14,s:9+Math.min(12,dmg*.4),spark:1,ang});
+  G.parts.push({x:hx,y:hy,vx:0,vy:0,t:0,life:.14,s:9+Math.min(12,dmg*.4),spark:1,ang,col:el?ELC[el]:null});
   const n=clamp(Math.round(dmg/5),2,6);
   for(let i=0;i<n;i++){ const a=ang+rand(-.7,.7), sp=rand(90,230); G.parts.push({x:hx,y:hy,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-70,t:0,life:rand(.25,.45),s:rand(1.5,3),c:MAT[e.type]||'#b5683f',shard:1,rot:rand(0,TAU),vr:rand(-14,14)}); }
 }
@@ -449,13 +471,26 @@ const REACT={
   'jin|shui':{n:'汞齐',k:'生',c:'#d6e2ea',fn:(e,c)=>{ near(e.x,e.y,50,o=>{ o.amal=3; o.amalSrc=c.src; }); burst(e.x,e.y,'#e6eef3',8); }},
   'mu|shui': {n:'滋长',k:'生',c:'#8fd08a',fn:(e,c)=>{ let k=0; near(e.x,e.y,90,o=>{ if(k<4&&!o.boss){ o.stunT=Math.max(o.stunT||0,.9); k++; } }); P.hp=Math.min(P.maxhp,P.hp+3); G.areas.push({kind:'roots',x:e.x,y:e.y,r:90,life:1,max:1}); }},
 };
+function elFX(el,x,y,big){ const k=big?1.6:1, C=ELC[el];
+  G.areas.push({kind:'elring',x,y,r:58*k,life:.45,max:.45,col:C,el});
+  if(el==='jin'){ for(let i=0;i<5;i++){ const a=rand(0,TAU); const pts=[[x,y]]; let px=x,py=y; for(let j=0;j<4;j++){ px+=Math.cos(a+rand(-.5,.5))*16*k; py+=Math.sin(a+rand(-.5,.5))*16*k; pts.push([px,py]); } G.areas.push({kind:'bolt',pts,life:.25,max:.25,col:'#fff2a0'}); }
+    for(let i=0;i<10;i++){ const a=rand(0,TAU),s=rand(80,220)*k; G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:0,life:.35,s:6,spark:1,ang:a,col:'#ffe35a'}); } }
+  else if(el==='mu'){ for(let i=0;i<14;i++){ const a=rand(0,TAU),s=rand(60,170)*k; G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-40,t:0,life:rand(.5,.9),s:rand(4,7),leaf:1,rot:rand(0,TAU),vr:rand(-8,8),c:i%2?'#4fd36b':'#9be35a'}); } }
+  else if(el==='shui'){ for(let i=0;i<16;i++){ const a=rand(0,TAU),s=rand(90,220)*k; G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-60,t:0,life:rand(.35,.6),s:rand(2.5,4.5),c:i%3?'#3fb0ff':'#bfe6ff',shard:1,drop:1,rot:0,vr:0}); }
+    G.areas.push({kind:'elring',x,y,r:90*k,life:.6,max:.6,col:'#9fd8ff',thin:1}); }
+  else if(el==='huo'){ for(let i=0;i<16;i++){ G.parts.push({x:x+rand(-14,14)*k,y:y+rand(-8,8),vx:rand(-25,25),vy:rand(-160,-70)*k,t:0,life:rand(.35,.6),s:rand(5,9)*k,flame:1,c:i%3?'#ff4d2e':'#ffb03a'}); } }
+  else if(el==='tu'){ for(let i=0;i<12;i++){ const a=rand(0,TAU),s=rand(70,180)*k; G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-90,t:0,life:rand(.4,.7),s:rand(3,6),c:i%2?'#c98a3e':'#8a5a2a',shard:1,rot:rand(0,TAU),vr:rand(-10,10)}); }
+    G.areas.push({kind:'quake',x,y,r:80*k,life:.45,max:.45}); }
+}
 function burst(x,y,col,n){ for(let i=0;i<n;i++){ const a=rand(0,TAU),s=rand(40,140); G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:0,life:rand(.3,.6),s:rand(3,6),c:col,soft:1}); } }
+const REACT_EL={}; for(const k in REACT){ REACT_EL[REACT[k].n]=k.split('|'); }
 function applyEl(e,el,c,prev){
   if(!e.mk) e.mk={}; prev=prev||e.mk;
   if(e.rcd<=0){ for(const o of EL_IDS){ if(o===el||!(prev[o]>0)||!(e.mk[o]>0)) continue; const key=[el,o].sort().join('|'); const R=REACT[key]; if(R){ e.mk[o]=0; e.mk[el]=0; e.rcd=.6; doReact(R,e,c); return; } } }
   e.mk[el]=3; if(el==='huo') e.burnSrc=c.src;
 }
 function doReact(R,e,c){ G.stats.react++; G.reactLog[R.n]=(G.reactLog[R.n]||0)+1; addQi(R.k==='克'?1.4:1.2);
+  for(const el of REACT_EL[R.n]) elFX(el,e.x+rand(-6,6),e.y-8,true);
   R.fn(e,c); G.texts.push({x:e.x,y:e.y-28,t:0,life:.9,s:R.n,c:R.c,word:1}); sfx('react'); G.shake=Math.max(G.shake,3); }
 function killEnemy(e,src){
   if(e.dead) return; e.dead=true;
@@ -498,6 +533,7 @@ const GUA={ // 键：从下往上三爻，1 阳 0 阴
   '001':{n:'艮',sym:'☶',x:'山',el:'tu',u:'山岳',ud:'四座石山拔地而起，把你护在中间，压碎周围的敌人'},
   '110':{n:'兑',sym:'☱',x:'泽',el:'jin',u:'泽',ud:'脚下化成一片湖泽，回血、减速敌人，死在泽里的都算解脱'},
 };
+const GUA_COL={'乾':'#fff1b0','坤':'#d9a441','震':'#a98bff','巽':'#5fe0c0','坎':'#3f8cff','离':'#ff4d2e','艮':'#a8958a','兑':'#ff8fc6'};
 const UPPER={ // 上卦给大招加的变化
   '乾':'伤害 ×1.5','坤':'再加一层护盾','震':'大招再放一次','巽':'放完跑得飞快',
   '坎':'染上水银','离':'染上火','艮':'放完 2.5 秒无敌','兑':'回 20% 体力',
@@ -524,7 +560,8 @@ function castUlt(){ const lo=G.gua.lo, up=G.gua.up&&G.gua.up.on?G.gua.up:null;
   let mul=1; if(up&&up.n==='乾') mul=1.5; if(up&&up.n==='坎') c.els=['shui']; if(up&&up.n==='离') c.els=['huo'];
   c.mul*=mul; G.ults++;
   const title=(G.gua.full&&G.gua.hex)?G.gua.hex:lo.n+' · '+lo.u;
-  bigBanner(lo.sym+'  '+title,(G.gua.full&&HEX_NOTE[G.gua.hex])||lo.ud); sfx('ult'); G.shake=14; G.hitstop=.12;
+  bigBanner(lo.sym+'  '+title,(G.gua.full&&HEX_NOTE[G.gua.hex])||lo.ud,GUA_COL[lo.n]); sfx('ult'); G.shake=14; G.hitstop=.12;
+  G.areas.push({kind:'bagua',x:P.x,y:P.y,follow:true,r:120,life:1.6,max:1.6,col:GUA_COL[lo.n],sym:lo.sym}); G.ultFlash={col:GUA_COL[lo.n],t:.5};
   ULT[lo.n](c);
   if(up){ if(up.n==='坤') P.shield+=P.maxhp*.25; if(up.n==='震') G.queue.push({t:.7,fn:()=>ULT[lo.n]({...c,mul:c.mul*.6})}); if(up.n==='巽') P.haste=5;
     if(up.n==='艮') P.inv=Math.max(P.inv,2.5); if(up.n==='兑') P.hp=Math.min(P.maxhp,P.hp+P.maxhp*.2); }
@@ -544,7 +581,18 @@ const ULT={
     near(P.x,P.y,150,e=>hurt(e,42*c.mul,c,kbFrom(e,P.x,P.y,300))); P.inv=Math.max(P.inv,3); },
   '兑'(c){ P.hp=Math.min(P.maxhp,P.hp+P.maxhp*.35); G.areas.push({kind:'marsh',x:P.x,y:P.y,r:230,life:6,max:6,tick:0,c:{...c,src:'def'},dps:12*c.mul}); },
 };
-function bigBanner(t,sub){ G.banner={t,sub,life:2.4,max:2.4}; }
+function bigBanner(t,sub,col){ G.banner={t,sub,col,life:2.4,max:2.4}; }
+const TRI_ORDER=['乾','兑','离','震','巽','坎','艮','坤'];
+const TRI_LINES={'乾':'111','兑':'110','离':'101','震':'100','巽':'011','坎':'010','艮':'001','坤':'000'};
+function drawBaguaWheel(x,y,R,col,f,sym,k){ cx.save(); cx.translate(x,y); cx.rotate(G.t*1.2); cx.globalAlpha=f;
+  cx.strokeStyle=col; cx.lineWidth=2; cx.beginPath(); cx.arc(0,0,R,0,TAU); cx.stroke(); cx.beginPath(); cx.arc(0,0,R*.62,0,TAU); cx.stroke();
+  TRI_ORDER.forEach((n,i)=>{ const a=i/8*TAU; cx.save(); cx.rotate(a); cx.translate(0,-R*.81); const L=TRI_LINES[n]; for(let j=0;j<3;j++){ const yy=(1-j)*5.5; cx.fillStyle=col;
+      if(L[j]==='1') cx.fillRect(-11,yy-1.6,22,3.2); else { cx.fillRect(-11,yy-1.6,9,3.2); cx.fillRect(2,yy-1.6,9,3.2); } } cx.restore(); });
+  // 太极
+  cx.rotate(-G.t*2.4); const r0=R*.32; cx.fillStyle='#f3ead6'; cx.beginPath(); cx.arc(0,0,r0,0,TAU); cx.fill(); cx.fillStyle='#14100c'; cx.beginPath(); cx.arc(0,0,r0,Math.PI/2,Math.PI*1.5); cx.fill();
+  cx.beginPath(); cx.arc(0,-r0/2,r0/2,0,TAU); cx.fillStyle='#14100c'; cx.fill(); cx.beginPath(); cx.arc(0,r0/2,r0/2,0,TAU); cx.fillStyle='#f3ead6'; cx.fill();
+  cx.fillStyle='#f3ead6'; cx.beginPath(); cx.arc(0,-r0/2,r0/7,0,TAU); cx.fill(); cx.fillStyle='#14100c'; cx.beginPath(); cx.arc(0,r0/2,r0/7,0,TAU); cx.fill();
+  cx.restore(); cx.globalAlpha=1; }
 
 /* ---------------- 敌人 ---------------- */
 const ETYPES={
@@ -681,7 +729,7 @@ function updateProjs(dt){
       if(p.kind==='bee'){ p.tgt=null; }
       if(p.pierce--<=0&&!p.boomer) p.life=0; });
     // 联动：折箭
-    if(p.gid==='nu'&&!p.folded&&hasSyn('折箭')){ const dun=hasGear('dun'); if(dun&&dun.pts) for(const q of dun.pts){ if(Math.hypot(q.x-p.x,q.y-p.y)<(dun.osize||15)+6){ p.folded=1; const a=Math.atan2(p.vy,p.vx);
+    if(p.gid==='nu'&&!p.folded&&hasSyn('折箭')){ if(Math.random()>.35) p.folded=1; const dun=p.folded?null:hasGear('dun'); if(dun&&dun.pts) for(const q of dun.pts){ if(Math.hypot(q.x-p.x,q.y-p.y)<(dun.osize||15)+6){ p.folded=1; const a=Math.atan2(p.vy,p.vx);
         for(const s2 of [-.32,.32]) G.projs.push(Object.assign(mkProj({...p.c,mod:null},p.x,p.y,a+s2,p.sp,p.dmg*.8,{life:.7,col:'#ffe0a0',len:p.len,folded:1,gid:'nu'}),{})); synFire('折箭',p.x,p.y); break; } } }
   }
   G.projs=G.projs.filter(p=>p.life>0);
@@ -956,7 +1004,8 @@ function rollChoices(){
   if(!out.length) out.push({type:'heal'});
   return out;
 }
-function glyphHTML(id,g){ const d=GEARS[id]; const gl=g?glyphOf(g):d.g; return `<span class="glyph ${d.k==='def'?'def':''}" style="border-color:${ELC[d.el]};color:${ELC[d.el]}">${gl}</span>`; }
+function glyphHTML(id,g){ const d=GEARS[id]; const gl=g?glyphOf(g):d.g; const el=g?mainEl(g):d.el; return `<span class="glyph ${d.k==='def'?'def':''}" style="border-color:${ELC[el]};color:${ELC[el]};box-shadow:0 0 10px ${ELC[el]}55">${gl}</span>`; }
+const chip=el=>`<span class="chip" style="background:${ELC[el]}">${ELN[el]}</span>`;
 function synHint(id){ const w=synWith(id); return w.length?`<div class="ds" style="color:#ffd27a;margin-top:6px">✦ 能和「${GEARS[w[0].with].n}」联动：${w[0].s.n}</div>`:''; }
 function guaHint(o){ // 选了这张卡之后，下卦 / 上卦会不会成
   const before=G.gua?{lo:G.gua.lo&&G.gua.lo.on,up:G.gua.up&&G.gua.up.on}:{};
@@ -975,10 +1024,11 @@ function openLevel(){
   document.querySelector('#ovLevel .h2').textContent='工具包';
   document.getElementById('lvSub').textContent=`第 ${P.lv} 级 · 选一样`+(G.pendingLv>1?`（还有 ${G.pendingLv-1} 次）`:'')+` · 已用 ${G.gears.length}/${MAX_SLOTS} 格`;
   ch.forEach((o,i)=>{ const el=document.createElement('div'); el.className='card'; let h='';
-    if(o.type==='new'){ const d=GEARS[o.id]; h=`<div class="tag">新的${d.k==='atk'?'器 · 自动攻击':'守 · 自动防御'} · ${ELN[d.el]} · ${yao(d.k)}</div><div class="nm">${glyphHTML(o.id)}${d.n}</div><div class="ds">${d.desc}</div>${synHint(o.id)}${guaHint(o)}`; }
-    else if(o.type==='up'){ const d=GEARS[o.g.id]; h=`<div class="tag">升级 · ${o.g.lv} → ${o.g.lv+1} 级</div><div class="nm">${glyphHTML(o.g.id,o.g)}${d.n}</div><div class="ds">伤害更高、出手更快${o.g.lv+1>=4?'；4 级起可在宝匣里进化（看图鉴）':''}</div>`; }
-    else if(o.type==='branch'){ const d=GEARS[o.g.id]; h=`<div class="tag" style="color:#ffd27a">进阶 · 升到 3 级，选一个形态</div><div class="nm">${glyphHTML(o.g.id,o.g)}${d.n}</div><div class="ds">${BR[o.g.id].map(b=>b.n).join(' / ')}</div>`; }
-    else if(o.type==='mod'){ const d=GEARS[o.g.id], m=MODS[o.mod]; h=`<div class="tag">零件 · 装到「${d.n}」上</div><div class="nm">${glyphHTML(o.g.id,o.g)}${m.n}</div><div class="ds">${modText(o.g.id,o.mod)}</div>${guaHint(o)}`; }
+    const tint=(c)=>{ el.classList.add('el'); el.style.borderColor=c; el.style.background=`linear-gradient(160deg,${c}26,rgba(24,18,13,.95) 55%)`; };
+    if(o.type==='new'){ const d=GEARS[o.id]; tint(ELC[d.el]); h=`<div class="tag">${chip(d.el)}新的${d.k==='atk'?'器 · 自动攻击':'守 · 自动防御'} · ${yao(d.k)}</div><div class="nm">${glyphHTML(o.id)}${d.n}</div><div class="ds">${d.desc}</div>${synHint(o.id)}${guaHint(o)}`; }
+    else if(o.type==='up'){ const d=GEARS[o.g.id]; tint(ELC[mainEl(o.g)]); h=`<div class="tag">${chip(mainEl(o.g))}升级 · ${o.g.lv} → ${o.g.lv+1} 级</div><div class="nm">${glyphHTML(o.g.id,o.g)}${d.n}</div><div class="ds">伤害更高、出手更快${o.g.lv+1>=4?'；4 级起可在宝匣里进化（看图鉴）':''}</div>`; }
+    else if(o.type==='branch'){ const d=GEARS[o.g.id]; tint(ELC[mainEl(o.g)]); h=`<div class="tag" style="color:#ffd27a">${chip(mainEl(o.g))}进阶 · 升到 3 级，选一个形态</div><div class="nm">${glyphHTML(o.g.id,o.g)}${d.n}</div><div class="ds">${BR[o.g.id].map(b=>b.n).join(' / ')}</div>`; }
+    else if(o.type==='mod'){ const d=GEARS[o.g.id], m=MODS[o.mod]; el.classList.add('part'); if(m.el) el.style.borderColor=ELC[m.el]; h=`<div class="tag">⚙ 零件 · 装到「${d.n}」上${m.el?' · '+chip(m.el):''}</div><div class="nm"><span class="pgl" ${m.el?`style="border-color:${ELC[m.el]};color:${ELC[m.el]}"`:''}>${m.g}</span>${m.n}</div><div class="ds">${modText(o.g.id,o.mod)}</div>${guaHint(o)}`; }
     else if(o.type==='vital') h=`<div class="tag">坦克 · 体魄</div><div class="nm"><span class="glyph def" style="border-color:#c8503a;color:#c8503a">体</span>强身</div><div class="ds">体力上限 +25，回满 25 点。反震甲的伤害跟着体力上限涨</div>`;
     else h=`<div class="tag">回气</div><div class="nm">喘口气</div><div class="ds">回复 30 点体力</div>`;
     el.innerHTML=`<span class="key">${i+1}</span>`+h;
@@ -986,6 +1036,18 @@ function openLevel(){
     box.appendChild(el); });
   show('ovLevel');
 }
+function openTidy(){ show('ovSlots'); renderTidy(); renderGuaRef(); }
+function renderTidy(){ computeGua(); const box=document.getElementById('slotEd'); box.innerHTML='';
+  G.gears.forEach((g,i)=>{ const d=GEARS[g.id]; const el=document.createElement('div'); el.className='sed'; el.style.borderColor=ELC[mainEl(g)];
+    el.innerHTML=`<div style="font-size:12px;color:var(--dim)">第 ${i+1} 格 · ${i<3?'下卦':'上卦'} · ${d.k==='atk'?'⚊ 阳':'⚋ 阴'}</div>${glyphHTML(g.id,g)}<div class="nm">${d.n}</div><div class="row2"><button data-mv="-1">◀</button><button data-del="1">拆下</button><button data-mv="1">▶</button></div>`;
+    el.querySelectorAll('button').forEach(b=>b.onclick=()=>{ if(b.dataset.del){ G.gears.splice(i,1); sfx('smash'); } else { const j=i+(+b.dataset.mv); if(j<0||j>=G.gears.length) return; [G.gears[i],G.gears[j]]=[G.gears[j],G.gears[i]]; sfx('block'); } renderTidy(); refreshSlots(); });
+    box.appendChild(el); });
+  const lo=G.gua.lo, up=G.gua.up; const t=(x,n)=>x?`${n}：${x.sym} ${x.n}${x.on?' · 已成（'+(n==='下卦'?x.u:UPPER[x.n])+'）':' · 未成，缺'+ELN[x.el]}`:`${n}：还不满三格`;
+  document.getElementById('sedGua').innerHTML=t(lo,'下卦')+'<br>'+t(up,'上卦')+(G.gua.hex?`<br>卦象【${G.gua.hex}】${G.gua.full?' 六爻全成':''}`:''); }
+function renderGuaRef(){ const box=document.getElementById('guaRef'); const yl=k=>k.split('').map(c=>c==='1'?'攻':'守').join(' ');
+  box.innerHTML=Object.entries(GUA).map(([k,g])=>`<div style="border:1px solid ${GUA_COL[g.n]}66;border-radius:8px;padding:6px;background:${GUA_COL[g.n]}14"><b style="color:${GUA_COL[g.n]};font-size:16px">${g.sym} ${g.n}</b> · ${g.x}<br>${yl(k)}（下→上）<br>要有 ${chip(g.el)}<br><span style="color:var(--dim)">${g.u}</span></div>`).join(''); }
+document.getElementById('sedDone').onclick=()=>{ hide('ovSlots'); if(G&&G.state==='levelup') openLevel(); };
+document.getElementById('lvTidy').onclick=()=>openTidy();
 function finishPick(){ G.pendingLv--; sfx('level'); refreshSlots(); if(G.pendingLv>0) openLevel(); else { hide('ovLevel'); G.state='play'; } }
 function openBranch(g){ const box=document.getElementById('lvCards'); box.innerHTML='';
   document.querySelector('#ovLevel .h2').textContent=GEARS[g.id].n+' · 进阶'; document.getElementById('lvSub').textContent='选一个形态。选了就不能换，外形和打法都会变';
@@ -1048,7 +1110,7 @@ function pauseGame(){ if(!G||G.state!=='play') return; G.state='pause'; show('ov
 function resumeGame(){ hide('ovPause'); G.state='play'; }
 document.getElementById('pauseBtn').onclick=()=>pauseGame();
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-act]'); if(!b) return; audio(); const a=b.dataset.act;
-  if(a==='start') startGame('play'); else if(a==='sandbox') startGame('sandbox'); else if(a==='resume') resumeGame();
+  if(a==='start') startGame('play'); else if(a==='sandbox') startGame('sandbox'); else if(a==='resume') resumeGame(); else if(a==='tidy') openTidy();
   else if(a==='restart'){ hide('ovPause'); startGame(G.mode); } else if(a==='title'){ ['ovPause','ovResult','ovChest','ovLevel'].forEach(hide); document.getElementById('sandbox').classList.remove('on'); setHUD(false); G=null; show('ovTitle'); }
   else if(a==='endless') startEndless(); else if(a==='result') showResult(true);
   else if(a==='sfx'){ sfxOn=!sfxOn; b.textContent='音效：'+(sfxOn?'开':'关'); } else if(a==='nums'){ numOn=!numOn; b.textContent='伤害数字：'+(numOn?'开':'关'); }
@@ -1131,7 +1193,7 @@ function update(dt){
   for(const q of G.queue) q.t-=dt; const due=G.queue.filter(q=>q.t<=0); G.queue=G.queue.filter(q=>q.t>0); due.forEach(q=>q.fn());
   spawning(dt); buildGrid(); updateQi(dt); if(G.banner){ G.banner.life-=dt; if(G.banner.life<=0) G.banner=null; } G.xpPulse=Math.max(0,G.xpPulse-dt*4);
   updateGears(dt); updateProjs(dt); updateAreas(dt); updateDeps(dt); updateAllies(dt); updateEnemies(dt); updatePickups(dt);
-  for(const p of G.parts){ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; if(p.shard){ p.vy+=380*dt; p.rot+=p.vr*dt; } else if(p.soul){ p.vy-=20*dt; } else { p.vx*=.96; p.vy*=.96; } }
+  for(const p of G.parts){ p.t+=dt; p.x+=p.vx*dt; p.y+=p.vy*dt; if(p.leaf){ p.vx*=.95; p.vy=p.vy*.95+40*dt; p.rot+=p.vr*dt; } else if(p.flame){ p.vx*=.92; } else if(p.shard){ p.vy+=380*dt; p.rot+=p.vr*dt; } else if(p.soul){ p.vy-=20*dt; } else { p.vx*=.96; p.vy*=.96; } }
   G.parts=G.parts.filter(p=>p.t<p.life); if(G.parts.length>900) G.parts.splice(0,G.parts.length-900);
   for(const t of G.texts) t.t+=dt; G.texts=G.texts.filter(t=>t.t<t.life);
   G.comboT-=dt; G.comboPop=Math.max(0,G.comboPop-dt*6);
@@ -1186,6 +1248,7 @@ function render(rdt){
   const gr=cx.createRadialGradient(px,py,rr*.28,px,py,rr); gr.addColorStop(0,'rgba(0,0,0,0)'); gr.addColorStop(1,'rgba(5,3,2,.72)'); cx.fillStyle=gr; cx.fillRect(0,0,W,H);
   if(P.flash>0){ const g2=cx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.7); g2.addColorStop(0,'rgba(180,40,30,0)'); g2.addColorStop(1,`rgba(180,40,30,${P.flash*2.4})`); cx.fillStyle=g2; cx.fillRect(0,0,W,H); }
   if(G.boss&&!G.boss.dead) drawBossBar(G.boss);
+  if(G.ultFlash&&G.ultFlash.t>0){ G.ultFlash.t-=rdt; cx.fillStyle=hexA(G.ultFlash.col,Math.max(0,G.ultFlash.t)*.5); cx.fillRect(0,0,W,H); }
   drawGuaPanel(); drawBanner();
   { let inC=false; for(const a of G.areas) if((a.kind==='fog'||a.kind==='steam')&&Math.hypot(a.x-P.x,a.y-P.y)<a.r*.85){ inC=true; break; }
     G.vis=(G.vis||0)+((inC?1:0)-(G.vis||0))*Math.min(1,rdt*5); if(G.vis>.02){ const px2=W/2+(P.x-G.cam.x)*ZOOM, py2=H/2+(P.y-G.cam.y)*ZOOM; const g3=cx.createRadialGradient(px2,py2,40*ZOOM,px2,py2,150*ZOOM); g3.addColorStop(0,'rgba(220,225,228,0)'); g3.addColorStop(1,`rgba(205,212,216,${.92*G.vis})`); cx.fillStyle=g3; cx.fillRect(0,0,W,H); } }
@@ -1349,7 +1412,9 @@ function drawArea(a){ const k=1-a.life/a.max, f=a.life/a.max;
     if(a.sun){ const g=cx.createRadialGradient(a.x,a.y,a.r*.2,a.x,a.y,a.r); g.addColorStop(0,`rgba(255,220,140,${.25*f})`); g.addColorStop(1,'rgba(255,160,60,0)'); cx.fillStyle=g; cx.beginPath(); cx.arc(a.x,a.y,a.r,0,TAU); cx.fill(); } }
   else if(a.kind==='sword'){ const k2=1-f; cx.save(); cx.translate(a.x,a.y-60*(1-Math.min(1,k2*3))); cx.strokeStyle='#0c0806'; cx.lineWidth=7; line(0,-40,0,6); cx.strokeStyle='#ffe3a0'; cx.lineWidth=4; line(0,-40,0,6); cx.lineWidth=3; line(-8,-28,8,-28); cx.restore();
     if(k2>.3){ cx.strokeStyle=`rgba(255,227,160,${f})`; cx.lineWidth=3; cx.beginPath(); cx.arc(a.x,a.y,55*(k2),0,TAU); cx.stroke(); } }
-  else if(a.kind==='bolt'){ cx.lineCap='round'; cx.lineJoin='round'; for(const [w,col] of [[7,`rgba(120,170,255,${.5*f})`],[2.5,`rgba(235,245,255,${f})`]]){ cx.strokeStyle=col; cx.lineWidth=w; cx.beginPath(); a.pts.forEach(([x,y],i)=>{ const jx=x+rand(-5,5), jy=y+rand(-5,5); i?cx.lineTo(jx,jy):cx.moveTo(x,y); }); cx.stroke(); } }
+  else if(a.kind==='elring'){ cx.strokeStyle=hexA(a.col,.9*f); cx.lineWidth=(a.thin?2:6)*f+1; cx.beginPath(); cx.arc(a.x,a.y,a.r*(.35+.65*k),0,TAU); cx.stroke(); if(!a.thin){ cx.fillStyle=hexA(a.col,.18*f); cx.fill(); } }
+  else if(a.kind==='bagua'){ drawBaguaWheel(a.x,a.y,a.r*(.6+.4*Math.min(1,k*3)),a.col,f,a.sym,k); }
+  else if(a.kind==='bolt'){ cx.lineCap='round'; cx.lineJoin='round'; for(const [w,col] of [[7,a.col?hexA(a.col,.45*f):`rgba(120,170,255,${.5*f})`],[2.5,`rgba(255,250,235,${f})`]]){ cx.strokeStyle=col; cx.lineWidth=w; cx.beginPath(); a.pts.forEach(([x,y],i)=>{ const jx=x+rand(-5,5), jy=y+rand(-5,5); i?cx.lineTo(jx,jy):cx.moveTo(x,y); }); cx.stroke(); } }
   else if(a.kind==='tornado'){ for(let i=0;i<4;i++){ cx.strokeStyle=`rgba(200,225,210,${.35*f})`; cx.lineWidth=3; cx.beginPath(); cx.arc(a.x,a.y,a.r*(.3+i*.2),G.t*6+i,G.t*6+i+4); cx.stroke(); } }
   else if(a.kind==='arcwave'){ cx.strokeStyle=`rgba(205,220,230,${.8*f})`; cx.lineWidth=12; cx.beginPath(); cx.arc(a.x,a.y,a.R*.8,a.cur-.45,a.cur+.45); cx.stroke(); }
 }
@@ -1357,24 +1422,28 @@ function drawGuaPanel(){ if(!G.gua) return; const lo=G.gua.lo, up=G.gua.up; cons
   cx.save(); cx.globalAlpha=.95;
   // 气
   cx.lineWidth=5; cx.strokeStyle='rgba(255,255,255,.1)'; cx.beginPath(); cx.arc(x,y,34,0,TAU); cx.stroke();
-  const ready=lo&&lo.on; cx.strokeStyle=ready?(G.qi>=99?'#ffd27a':'#d4a64a'):'rgba(170,150,120,.6)'; cx.beginPath(); cx.arc(x,y,34,-Math.PI/2,-Math.PI/2+TAU*G.qi/100); cx.stroke();
+  const ready=lo&&lo.on; const gc=lo?GUA_COL[lo.n]:'#d4a64a'; cx.strokeStyle=ready?gc:'rgba(170,150,120,.6)'; if(ready&&G.qi>80){ cx.shadowColor=gc; cx.shadowBlur=10+8*Math.sin(G.t*10); } cx.beginPath(); cx.arc(x,y,34,-Math.PI/2,-Math.PI/2+TAU*G.qi/100); cx.stroke();
   cx.textAlign='center'; cx.textBaseline='middle';
-  if(lo){ cx.font='30px serif'; cx.fillStyle=lo.on?'#efe4cf':'rgba(239,228,207,.3)'; cx.fillText(lo.sym,x,y-2);
-    cx.font='13px BM-Long, BM-Kai, serif'; cx.fillStyle=lo.on?'#ffd27a':'rgba(239,228,207,.45)'; cx.fillText(lo.on?lo.n+' · '+lo.u:lo.n+' 未成（缺'+ELN[lo.el]+'）',x-10,y+50); }
+  cx.shadowBlur=0;
+  if(lo){ cx.font='30px serif'; cx.fillStyle=lo.on?gc:'rgba(239,228,207,.3)'; cx.fillText(lo.sym,x,y-2);
+    cx.font='13px BM-Long, BM-Kai, serif'; cx.fillStyle=lo.on?gc:'rgba(239,228,207,.45)'; cx.fillText(lo.on?'气满放：'+lo.n+' · '+lo.u:lo.n+' 未成（缺'+ELN[lo.el]+'）',x-14,y+50); }
   else { cx.font='12px BM-Hei, sans-serif'; cx.fillStyle='rgba(239,228,207,.5)'; cx.fillText('凑满三格成卦',x,y); }
   if(up){ cx.font='18px serif'; cx.fillStyle=up.on?'#efe4cf':'rgba(239,228,207,.3)'; cx.fillText(up.sym,x,y-50); cx.font='11px BM-Hei, sans-serif'; cx.fillStyle='rgba(239,228,207,.6)'; cx.fillText(up.on?'上'+up.n+'：'+UPPER[up.n]:'上'+up.n+' 未成',x-14,y-70); }
   if(G.gua.hex){ cx.font='15px BM-Long, BM-Kai, serif'; cx.fillStyle=G.gua.full?'#ffd27a':'rgba(239,228,207,.5)'; cx.fillText('【'+G.gua.hex+'】',x-10,y-92); }
   cx.restore(); cx.textBaseline='alphabetic'; }
 function drawBanner(){ const b=G.banner; if(!b) return; const k=1-b.life/b.max, a=Math.min(1,b.life/.4,k/.08), sc=k<.08?1.5-k/.08*.5:1;
   cx.save(); cx.globalAlpha=a; cx.translate(W/2,H*.36); cx.scale(sc,sc); cx.textAlign='center';
-  cx.font='40px BM-Long, BM-Kai, serif'; cx.lineWidth=6; cx.strokeStyle='#0c0806'; cx.strokeText(b.t,0,0); cx.fillStyle='#ffd27a'; cx.fillText(b.t,0,0);
+  cx.font='40px BM-Long, BM-Kai, serif'; cx.lineWidth=6; cx.strokeStyle='#0c0806'; cx.strokeText(b.t,0,0); cx.fillStyle=b.col||'#ffd27a'; cx.shadowColor=b.col||'#ffd27a'; cx.shadowBlur=18; cx.fillText(b.t,0,0); cx.shadowBlur=0;
   if(b.sub){ cx.font='15px BM-Hei, sans-serif'; cx.lineWidth=4; cx.strokeText(b.sub,0,30); cx.fillStyle='#efe4cf'; cx.fillText(b.sub,0,30); }
   cx.restore(); }
 function hexA(h,a){ const n=parseInt(h.slice(1),16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`; }
 function drawPart(p){ const f=1-p.t/p.life;
   if(p.spark){ cx.save(); cx.translate(p.x,p.y); cx.rotate(p.ang); cx.globalAlpha=f; const L=p.s*(.6+.6*f);
-    cx.strokeStyle=p.muzzle?'#ffd890':'#fff6dc'; cx.lineCap='round'; cx.lineWidth=p.muzzle?4:3; line(-L*.2,0,L,0);
+    cx.strokeStyle=p.col||(p.muzzle?'#ffd890':'#fff6dc'); cx.lineCap='round'; cx.lineWidth=p.muzzle?4:3; line(-L*.2,0,L,0);
     cx.lineWidth=2; line(0,-L*.55,0,L*.55); line(-L*.35,-L*.35,L*.35,L*.35); line(-L*.35,L*.35,L*.35,-L*.35); cx.restore(); cx.globalAlpha=1; return; }
+  if(p.shard&&p.leaf2){ return; }
+  if(p.leaf){ cx.save(); cx.translate(p.x,p.y); cx.rotate(p.rot); cx.globalAlpha=f; cx.fillStyle=p.c; cx.beginPath(); cx.ellipse(0,0,p.s,p.s*.45,0,0,TAU); cx.fill(); cx.restore(); cx.globalAlpha=1; return; }
+  if(p.flame){ cx.globalAlpha=f; cx.fillStyle=p.c; cx.beginPath(); cx.moveTo(p.x-p.s*.5,p.y); cx.quadraticCurveTo(p.x,p.y-p.s*2.2*f,p.x+p.s*.5,p.y); cx.fill(); cx.globalAlpha=1; return; }
   if(p.pop){ cx.globalAlpha=f; cx.strokeStyle='#fff3d6'; cx.lineWidth=3*f+1; cx.beginPath(); cx.arc(p.x,p.y,p.s*(1.25-f*.6),0,TAU); cx.stroke(); cx.globalAlpha=1; return; }
   if(p.shard){ cx.save(); cx.translate(p.x,p.y); cx.rotate(p.rot); cx.globalAlpha=f; cx.fillStyle=p.c; cx.beginPath(); cx.moveTo(-p.s,-p.s*.6); cx.lineTo(p.s,0); cx.lineTo(-p.s*.4,p.s); cx.closePath(); cx.fill(); cx.restore(); cx.globalAlpha=1; return; }
   if(p.soul){ const g=cx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.s*2); g.addColorStop(0,`rgba(255,240,200,${.9*f})`); g.addColorStop(1,'rgba(255,230,170,0)'); cx.fillStyle=g; cx.beginPath(); cx.arc(p.x,p.y,p.s*2,0,TAU); cx.fill(); return; }

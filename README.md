@@ -20,4 +20,4 @@
 
 **在线玩：** https://chuyuanwritings-max.github.io/wuque-nanfei/mo/
 
-秦陵墨家工匠的类《吸血鬼幸存者》肉鸽原型（1.3）。等独立仓库建好后会搬过去。
+秦陵墨家工匠的类《吸血鬼幸存者》肉鸽原型（1.4）。独立仓库：https://github.com/chuyuanwritings-max/mo
