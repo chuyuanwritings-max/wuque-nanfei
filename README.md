@@ -21,3 +21,11 @@
 **在线玩：** https://chuyuanwritings-max.github.io/wuque-nanfei/mo/
 
 秦陵墨家工匠的类《吸血鬼幸存者》肉鸽原型（1.6）。独立仓库：https://github.com/chuyuanwritings-max/mo
+
+---
+
+## 另：《大观园三合一》原型（暂放这里）
+
+**在线玩：** https://chuyuanwritings-max.github.io/wuque-nanfei/sanheyi/
+
+三消肉鸽候选 C「放置三合一」的 8 比特原型（1.4）：手里的东西放进格子，三个一样合成高一级；一局三季，季间商店挑道具。等有了独立仓库再搬过去。

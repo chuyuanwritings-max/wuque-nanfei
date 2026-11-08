@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>大观园三合一</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+QingKe+HuangYou&display=swap">
+<style>
+/* 布局：夜晚园子，一列竖屏——顶栏（季、头像、目标、步数）→ 8 比特棋盘 → 手里/下一个/储物格 → 技能栏；弹层做选人、季末、商店。刻意只做深色一种外观，不跟随系统 */
+:root{
+  --bg:#191326;       /* 夜色底 */
+  --panel:#2A2140;    /* 面板 */
+  --panel2:#352A50;   /* 按下 / 次级面板 */
+  --line:#0C0815;     /* 描边、硬阴影 */
+  --fg:#EEE6F8;       /* 字 */
+  --mut:#A797C4;      /* 次要字 */
+  --pink:#FF7EB6; --lemon:#FFE45C; --mint:#6EE7A8; --sky:#5EC8FF; --violet:#A98BFF; --orange:#FF9F45;
+  --display:"ZCOOL QingKe HuangYou","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --body:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.app{max-width:420px;margin:0 auto;padding-block:10px 18px;display:flex;flex-direction:column;gap:10px}
+.px{background:var(--panel);border:2px solid var(--line);box-shadow:3px 3px 0 var(--line)}
+img.ico{image-rendering:pixelated;width:24px;height:24px;flex:none}
+img.ico.s{width:18px;height:18px}
+img.ico.l{width:40px;height:40px}
+img.ico.xl{width:56px;height:56px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px}
+.who{display:flex;align-items:center;gap:6px;min-width:0}
+.season{font-family:var(--display);font-size:22px;line-height:1;letter-spacing:.04em;display:flex;align-items:center;gap:4px}
+.season small{font-family:var(--body);font-size:12px;color:var(--mut);letter-spacing:0}
+.stats{display:flex;gap:10px;font-size:13px;font-variant-numeric:tabular-nums;color:var(--mut)}
+.stats b{font-size:16px;color:var(--fg)}
+.stage{position:relative;display:flex;justify-content:center}
+canvas#cv{image-rendering:pixelated;image-rendering:crisp-edges;display:block;touch-action:manipulation;cursor:pointer;max-width:100%;transition:transform .12s ease-out}
+canvas#cv.punch{transform:scale(1.045);transition:none}
+canvas#cv.punch2{transform:scale(1.08) rotate(-.6deg);transition:none}
+.banner{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);pointer-events:none;font-family:var(--display);
+  font-size:44px;line-height:1;white-space:nowrap;color:var(--lemon);
+  text-shadow:3px 0 0 var(--line),-3px 0 0 var(--line),0 3px 0 var(--line),0 -3px 0 var(--line),4px 4px 0 var(--line);
+  animation:bn 1.1s steps(12) forwards}
+.banner.combo{top:12%;font-size:26px;color:var(--pink);animation:cb .8s steps(8) forwards}
+.banner.goal{top:9%;font-size:30px;color:var(--mint)}
+@keyframes bn{0%{transform:translate(-50%,-50%) scale(.3)}15%{transform:translate(-50%,-50%) scale(1.25)}25%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-80%) scale(1)}}
+@keyframes cb{0%{transform:translate(-50%,0) scale(.4)}20%{transform:translate(-50%,0) scale(1.3)}35%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0}}
+.hand{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px}
+.slot{padding:6px 6px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;color:var(--mut)}
+.slot canvas{image-rendering:pixelated;width:44px;height:44px}
+.slot.cur canvas{width:66px;height:66px}
+.slot.cur{color:var(--fg)}
+.slot.store{cursor:pointer}
+.slot.store:focus-visible,button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+.bar{display:flex;gap:8px;align-items:stretch}
+button{font-family:var(--body);font-size:14px;color:var(--fg);background:var(--panel);border:2px solid var(--line);box-shadow:3px 3px 0 var(--line);padding:6px 10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+button:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--line)}
+button:disabled{opacity:.45;cursor:default}
+button.on{background:var(--pink);color:var(--line)}
+button.go{background:var(--mint);color:var(--line)}
+.bar .skill{flex:1;justify-content:flex-start}
+.tip{font-size:12px;line-height:1.5;color:var(--mut);text-align:center;min-height:18px}
+.overlay[hidden]{display:none}
+.overlay{position:fixed;inset:0;background:rgba(8,5,14,.72);display:flex;align-items:center;justify-content:center;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));z-index:20}
+.card{max-width:400px;width:100%;max-height:100%;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.card h2{font-family:var(--display);font-size:28px;font-weight:400;margin:0;letter-spacing:.04em;text-wrap:balance;display:flex;align-items:center;gap:8px}
+.card p{margin:0;font-size:14px;line-height:1.6}
+.choices{display:grid;gap:8px}
+.choice{text-align:left;display:flex;align-items:center;gap:10px;padding:8px 10px;justify-content:flex-start}
+.choice .txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.choice b{font-family:var(--display);font-size:20px;font-weight:400}
+.choice span{font-size:13px;line-height:1.5;color:var(--mut)}
+.choice .price{color:var(--lemon);display:inline-flex;align-items:center;gap:4px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.coins{font-variant-numeric:tabular-nums;font-size:14px;padding:3px 8px;background:var(--panel2);border:2px solid var(--line);display:inline-flex;align-items:center;gap:4px;color:var(--lemon)}
+.owned{font-size:12px;line-height:1.6;color:var(--mut);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.big{font-family:var(--display);font-size:44px;line-height:1;color:var(--lemon)}
+.note{font-size:11px;color:var(--mut);opacity:.7;text-align:center}
+/* 字色：关键词有颜色，正文亮、次要暗 */
+.kw{color:var(--lemon)} .kw-p{color:var(--pink)} .kw-g{color:var(--mint)} .kw-b{color:var(--sky)}
+.c-daiyu{color:#8FDCC4} .c-baochai{color:#F7BE95} .c-xiangyun{color:#FF8FA3}
+.chain{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:2px;padding:8px;background:var(--panel2);border:2px solid var(--line)}
+.chain .ar{color:var(--mut);font-size:12px}
+.chain .eq{color:var(--lemon);font-family:var(--display);font-size:18px;padding:0 4px}
+.hrow{display:flex;align-items:center;gap:6px;font-size:14px;line-height:1.4}
+.hrow .lbl{color:var(--fg)}
+.charcard{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.charcard button{flex-direction:column;gap:6px;padding:10px 4px}
+.charcard b{font-family:var(--display);font-size:22px;font-weight:400}
+.charcard .sk{display:flex;align-items:center;gap:3px;font-size:12px;color:var(--fg)}
+.small-link{background:none;border:none;box-shadow:none;color:var(--mut);font-size:12px;text-decoration:underline;padding:4px}
+/* 新手引导 */
+.tut[hidden]{display:none}
+.tut{position:fixed;inset:0;z-index:30}
+.tut .spot{position:fixed;box-shadow:0 0 0 9999px rgba(8,5,14,.72);border:2px solid var(--lemon);pointer-events:none;transition:all .18s steps(4)}
+.tut .say{position:fixed;left:50%;transform:translateX(-50%);width:min(400px,calc(100% - 32px));padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.tut .say.top{top:calc(10px + env(safe-area-inset-top,0px))}
+.tut .say.bottom{bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.tut .say .line{display:flex;gap:10px;align-items:center;font-size:16px;line-height:1.45}
+.tut .say .row2{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tut .say.shake{animation:sh .3s steps(6)}
+@keyframes sh{0%,100%{transform:translateX(-50%)}25%{transform:translateX(calc(-50% - 6px))}75%{transform:translateX(calc(-50% + 6px))}}
+.tut .hand{position:fixed;width:36px;height:36px;image-rendering:pixelated;pointer-events:none;animation:hd .7s steps(2) infinite}
+@keyframes hd{50%{transform:translate(4px,6px)}}
+.tut .skip{font-size:12px;padding:4px 8px}
+@media (prefers-reduced-motion:reduce){button:active{transform:none}.banner{animation-duration:.01s}canvas#cv{transition:none}}
+</style>
+
+<div class="app">
+  <header class="top px">
+    <div class="who"><img class="ico l" id="whoIco" alt=""><div class="season" id="seasonBox"><img class="ico s" id="seasonIco" alt=""><span id="seasonName">春</span><small id="seasonIdx">1/3</small></div></div>
+    <div class="stats"><span>目标 <b id="target">90</b></span><span>剩 <b id="moves">26</b> 步</span></div>
+  </header>
+
+  <div class="stage" id="stage"><canvas id="cv" width="112" height="128" aria-label="园子棋盘"></canvas></div>
+
+  <div class="hand">
+    <div class="slot cur px"><canvas id="cvCur" width="11" height="11"></canvas><div id="nmCur">手里：种子</div></div>
+    <div class="slot px"><canvas id="cvNext" width="11" height="11"></canvas><div id="nmNext">下一个</div></div>
+    <div class="slot store px" id="storeBox" tabindex="0" role="button" aria-label="储物格：点一下把手里的东西存起来或换出来"><canvas id="cvStore" width="11" height="11"></canvas><div id="nmStore">储物格</div></div>
+  </div>
+
+  <div class="bar">
+    <button class="skill" id="skillBtn"><img class="ico" id="skillIco" alt=""><span id="skillTxt">技能</span></button>
+    <button id="helpBtn" aria-label="怎么玩"><img class="ico s" id="helpIco" alt=""></button>
+    <button id="soundBtn" aria-pressed="true" aria-label="声音"><img class="ico s" id="soundIco" alt=""></button>
+  </div>
+  <div class="tip" id="tip">点一下看预览，再点一下放下</div>
+  <div class="note">原型 1.4 · 8 比特代码绘制 · 数值未调 · Kira</div>
+</div>
+
+<div class="overlay" id="ov" hidden><div class="card px" id="ovCard"></div></div>
+<div class="tut" id="tut" hidden><div class="spot" id="tutSpot"></div><img class="hand" id="tutHand" alt="" hidden><div class="say px top" id="tutSay"></div></div>
+
+<script>
+(()=>{
+const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ---------- 色板 ---------- */
+const PAL={k:'#2B1B3D',w:'#FFF8F0',W:'#FFFFFF',p:'#FF7EB6',P:'#D94F8F',b:'#5EC8FF',B:'#2E8FD6',g:'#6EE7A8',G:'#2FB377',
+  y:'#FFE45C',Y:'#E0A82E',o:'#FF9F45',O:'#D96A1F',v:'#A98BFF',V:'#6F55D9',n:'#C98A63',N:'#8A5A44',s:'#D8D0E6',S:'#9A90B5',
+  f:'#FFDCC8',F:'#E9A98E',h:'#4A3566',c:'#8FDCC4',C:'#4FA38E',q:'#F7BE95',Q:'#D98A5E',r:'#F0506A',R:'#B32E4A',x:'#0C0815'};
+/* ---------- 像素图：园子里的东西（11×11） ---------- */
+const SP={
+ T1:["...........","...........",".....kk....","....kggk...","....kgk....","...kNNNk...","..kNnnNNk..","..kNnnnNk..","..kNNnNNk..","...kNNNk...","....kkk...."],
+ T2:["...........","..kk...kk..",".kggk.kggk.",".kgGgkgGgk.","..kgGkGgk..","...kkGkk...",".....Gk....","....kGk....","..kNNNNNk..","..kNnnnNk..","...kkkkk..."],
+ T3:["....kkk....","...kpppk...","..kpPpPpk..","..kppyppk..","..kpPpPpk..","...kpppk...","....kGk.kk.",".kk.kGkkgk.",".kgkkGkgk..","..kggGgk...","...kkkkk..."],
+ T4:["...kkkkk...","..kgggpgk..",".kgpggggGk.","kggggpggGGk","kgpgggggpGk","kggggpgggGk","kGgpggggGGk",".kGGgggGGk.","..kkkNkkk..","....kNk....","...kkkkk..."],
+ T5:["..kkkkkkk..",".kgggpgggk.","kggpgggpgGk","kgggggggGGk","kgpgggpgGGk",".kGgggGGGk.","..kkkNkkk..","....kNk....","....kNk....","...kNNNk...","..kkkkkkk.."],
+ T6:[".....k.....","....kok....","...koook...","..kooOook..",".kkkkkkkkk.","kVVVVVVVVVk",".kkkkkkkkk.","..kwk.kwk..","..kwk.kwk..",".kkkkkkkkk.","kssssssssSk"],
+ T7:["....kkk....","...kooOk...","..kkkkkkk..","..kwbkbwk..",".kkkkkkkkk.","kooooOooook","kkkkkkkkkkk",".kwbkwkbwk.",".kwbkwkbwk.","kkkkkkkkkkk","kssssssssSk"],
+ R1:["...........","...........","...........","....kkk....","...kssSk...","..kswssSk..","..ksssSSk..",".kssssSSSk.",".kSSSSSSSk.","..kkkkkkk..","..........."],
+ R2:["...kkk.....","..kssSk....","..kswSk.kk.",".kssSSkkSk.",".kssSSSSSk.","kswsSSSSSSk","ksssSSSkSSk","kSsSSSkgkSk","kSSSSSSkSSk","kbbbbbbbbbk","kkkkkkkkkkk"],
+ D: [".....k.....","....kbk....","....kbk....","...kbbbk...","..kbWbbbk..","..kbWbbBk..","..kbbbbBk..","..kbbbBBk..","...kBBBk...","....kkk....","..........."]
+};
+/* ---------- 像素图：头像（16×16）、技能、道具、界面图标（12×12） ---------- */
+const PORT={
+ daiyu:["......kkkk......","....kkhhhhkk....","...khhhhhhhhk.p.","..khhhhhhhhhhkpP","..khhhffffhhhk..","..khhffffffhhk..","..khfkkffkkfhk..","..khfkfffkffhk..","..khfPffffPfhk..","..khhffkkffhhk..","..khhkffffkhhk..","..khhhkffkhhhk..","..khhhhkkhhhhk..","..khhkccccchhk..",".khhkcccCcccchk.",".khkccccccccckhk"],
+ baochai:[".....kkkkkk.....","....khhhhhhk....","....khhyyhhk....","...kkkhhhhkkk...","..khhhhhhhhhhk..",".khhffffffffhhk.","khffffffffffffhk","kfffkkffffkkfffk","kffffffffffffffk","kfPPffffffffPPfk","kffffffkkffffffk",".kffffffffffffk.","..kkffffffffkk..","...kkqqyyqqkk...","..kqqqkyYkqqqqk.",".kqqqqqkkqqqqqqk"],
+ xiangyun:["...........rr...",".....kkkkkkrRr..","...kkhhhhhhkrk..","..khhhhhhhhhhk..","..khhhhhhhhhhk..","..khhhhhhhhhhk..","..khffhffhffhk..","..kffkffffkkfk..","..kffffffffffk..","..kfPffffffPfk..","..kffkWWWWkffk..","..khkffkkffkhk..","..khk.kffk.khk..","...kkrrrrrrkk...","..krrrRrrRrrrrk.",".krrrrrrrrrrrrrk"]
+};
+const ICON={
+ bury:["..........k.",".........kNk","........kNk.",".......kNk..","......kNk...",".....kNk....","..kkkNk.....",".kSSSk......",".kSSk..p....","..kk..pPp...",".......p..p.","..p......pPp"],
+ lock:["....kkkk....","...kYYYYk...","..kYk..kYk..","..kYk..kYk..",".kkkkkkkkkk.",".kyyyyyyyYk.",".kyyykkyyYk.",".kyyykkyyYk.",".kyyyykyyYk.",".kyyyyyyyYk.",".kYYYYYYYYk.","..kkkkkkkk.."],
+ nap:[".......kkkk.","........kk..",".......kkkk.","............",".kkkkkkkk...",".kWbbbbbk...",".kbbbbbbk.p.","..kbbbbk.pPp","...kbbk...p.","....kk......","...kkkk.....","..kNNNNk...."],
+ twin:["..kkk..kkk..",".kpPpk.kpPpk",".kpypk.kpypk",".kpPpk.kpPpk","..kkk..kkk..","...kGk.kGk..","....kGkGk...",".....kGk....",".....kGk....","...kkkGkkk..","...kNNNNNk..","....kkkkk..."],
+ bamboo:["..kk....kk..",".kgGk..kgGk.",".kgGk..kgGk.",".kkkk..kkkk.",".kgGk..kgGkk",".kgGkk.kgGgk",".kgGkgk.kGk.",".kkkk.k.kkk.",".kgGk..kgGk.",".kgGk..kgGk.",".kgGk..kgGk.","kkkkkkkkkkkk"],
+ bag:["....kkkk....","...kpPPpk...","....kyyk....","...kppppk...","..kppPPppk..",".kppPyyPppk.",".kpppyyPppk.",".kpppPPpppk.",".kPpppppppk.",".kPPpppppPk.","..kPPPPPPk..","...kkkkkk..."],
+ soil:[".........kk.","........kSk.",".......kSk..","......kNk...",".....kNk....","....kNk.....","...kNk......","..kNk.......","...k..kkkk..","....kknnNNk.","..kknnnNNNNk",".kkkkkkkkkkk"],
+ link:["..kk....kk..",".kGGk..kppk.","kGggGkkpPPpk","kGgggkkpPPpk","kGggGkkppPpk",".kGgGkkpPpk.","..kGgkkpPk..","...kGkkPk...","....kNNk....",".....kk.....","....kNNk....","...kkkkkk..."],
+ dew2:[".....k......","....kbk.....","...kbbbk..k.","..kbWbbbkkbk","..kbWbbBkbbk","..kbbbbBkkk.","...kBBBk....","....kkk.....","........k.k.",".........k..","........k.k.","............"],
+ coin:["...kkkkkk...","..kyyyyyYk..",".kyyYYYYyYk.",".kyYkkkkYYk.",".kyYk..kYYk.",".kyYk..kYYk.",".kyYkkkkYYk.",".kyyYYYYYYk.","..kYYYYYYk..","...kkkkkk...","............","............"],
+ sound:["......kk....",".....kWk....","....kWWk..k.",".kkkWWWk.k..",".kWWWWWk..k.",".kWWWWWk...k",".kWWWWWk..k.",".kkkWWWk.k..","....kWWk..k.",".....kWk....","......kk....","............"],
+ mute:["......kk....",".....kWk....","....kWWk....",".kkkWWWk....",".kWWWWWkr..r",".kWWWWWk.rr.",".kWWWWWk.rr.",".kkkWWWkr..r","....kWWk....",".....kWk....","......kk....","............"],
+ help:["...kkkkkk...","..kWWWWWWk..",".kWWkkkkWWk.",".kWk...kWWk.","..k...kWWk..",".....kWWk...","....kWWk....","....kWWk....",".....kk.....","....kWWk....","....kWWk....",".....kk....."],
+ spring:["....kk......","...kppk.kk..","..kpPppkppk.","..kpyPpPPpk.","...kpppkpk..","..kkkGkkk...",".kppkGk.....","kpPyPkGk....",".kppkk.Gk...","..kk....Gk..",".........k..","............"],
+ summer:["....kkkk....","...kpPPpk...","..kpppPPpk..",".kpPpppPppk.",".kppPyyPppk.","..kppyypPk..","...kkkkkk...",".kkgggggkk..","kggGgggGggk.","kgggGkGgggk.",".kkkkkkkkk..","............"],
+ autumn:[".....kk.....","....kOok....","..kkkoOkkk..",".kOoooOoooOk","..kOooOooOk.","...kooOook..","..kOooOooOk.",".kkOkkOkkOkk","....kkOkk...","......kN....",".......kN...","............"],
+ heart:["............",".kkk..kkk...","kpPPkkpPPk..","kpPPPpPPPk..","kPPPPPPPPk..",".kPPPPPPk...","..kPPPPk....","...kPPk.....","....kk......","............","............","............"],
+ xmark:["kk......kk..","krk....krk..",".krk..krk...","..krkkrk....","...krrk.....","..krkkrk....",".krk..krk...","krk....krk..","kk......kk..","............","............","............"],
+ hand:["....kk......","...kWWk.....","...kWWk.....","...kWWkkk...","...kWWkWWkk.",".kkkWWkWWkWk","kWWkWWWWWkWk","kWWWWWWWWWWk",".kWWWWWWWWWk","..kWWWWWWWk.","...kWWWWWk..","...kkkkkkk.."],
+ plus:["....kkk.....","....kgk.....","..kkkgkkk...","..kgggggk...","..kkkgkkk...","....kgk.....","....kkk.....","............","............","............","............","............"]
+};
+const NAME={T1:'种子',T2:'花苗',T3:'花',T4:'花丛',T5:'海棠树',T6:'亭子',T7:'楼阁',R1:'石头',R2:'假山',D:'露水'};
+const NEXT={T1:'T2',T2:'T3',T3:'T4',T4:'T5',T5:'T6',T6:'T7',T7:null,R1:'R2',R2:null};
+const PTS={T2:2,T3:6,T4:18,T5:50,T6:140,T7:400,R2:12};
+const TERMINAL={T7:1500,R2:150};
+const TIER=id=>id&&id[0]==='T'?+id[1]:0;
+
+function gridCanvas(rows,size){const c=document.createElement('canvas');c.width=size;c.height=size;const x=c.getContext('2d');
+  rows.forEach((row,y)=>{for(let i=0;i<size;i++){const ch=row[i]||'.';if(ch!=='.'&&PAL[ch]){x.fillStyle=PAL[ch];x.fillRect(i,y,1,1);}}});return c;}
+const sprCache={};const spr=id=>sprCache[id]||(sprCache[id]=gridCanvas(SP[id],11));
+/* 组合图标：园子里的东西 + 角标 */
+function compose(base,badge){const c=document.createElement('canvas');c.width=12;c.height=12;const x=c.getContext('2d');
+  x.drawImage(spr(base),0,0);if(badge){const b=gridCanvas(ICON[badge],12);x.drawImage(b,0,0,12,12,5,4,12,12);}return c;}
+const ICO_SRC={
+ bury:()=>gridCanvas(ICON.bury,12),lock:()=>gridCanvas(ICON.lock,12),nap:()=>gridCanvas(ICON.nap,12),
+ twin:()=>gridCanvas(ICON.twin,12),bamboo:()=>gridCanvas(ICON.bamboo,12),pavilion:()=>compose('T6','heart'),
+ bag:()=>gridCanvas(ICON.bag,12),soil:()=>gridCanvas(ICON.soil,12),stone:()=>compose('R2','plus'),link:()=>gridCanvas(ICON.link,12),
+ cherish:()=>compose('T3','heart'),dew:()=>gridCanvas(ICON.dew2,12),sprout:()=>compose('T2','plus'),nostone:()=>compose('R1','xmark'),
+ coin:()=>gridCanvas(ICON.coin,12),hand:()=>gridCanvas(ICON.hand,12),sound:()=>gridCanvas(ICON.sound,12),mute:()=>gridCanvas(ICON.mute,12),help:()=>gridCanvas(ICON.help,12),
+ spring:()=>gridCanvas(ICON.spring,12),summer:()=>gridCanvas(ICON.summer,12),autumn:()=>gridCanvas(ICON.autumn,12),
+ daiyu:()=>portrait('daiyu','#5E8F84'),baochai:()=>portrait('baochai','#B07A5C'),xiangyun:()=>portrait('xiangyun','#A0506A')};
+function portrait(id,bg){const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');
+  x.fillStyle=bg;x.fillRect(0,0,16,16);x.fillStyle='rgba(255,255,255,.18)';x.fillRect(0,0,16,1);x.fillRect(0,0,1,16);x.drawImage(gridCanvas(PORT[id],16),0,0);return c;}
+const urlCache={};const icoURL=k=>urlCache[k]||(urlCache[k]=ICO_SRC[k]().toDataURL());
+const img=(k,cls='')=>`<img class="ico ${cls}" src="${icoURL(k)}" alt="">`;
+const sprURLc={};const sprURL=id=>sprURLc[id]||(sprURLc[id]=spr(id).toDataURL());
+const simg=(id,cls='s')=>`<img class="ico ${cls}" src="${sprURL(id)}" alt="${NAME[id]||''}">`;
+/* 文字里的 {T5} 换成像素小图，{coin} 换成铜钱 */
+const fmt=t=>t.replace(/\{(\w+)\}/g,(m,k)=>SP[k]?simg(k):ICO_SRC[k]?img(k,'s'):m);
+
+/* 3×5 像素数字 */
+const DIG={'0':'111101101101111','1':'010110010010111','2':'111001111100111','3':'111001111001111','4':'101101111001001',
+ '5':'111100111001111','6':'111100111101111','7':'111001010010010','8':'111101111101111','9':'111101111001111',
+ '+':'000010111010000','x':'000101010101000','/':'001001010100100'};
+function drawNum(g,str,x,y,col,s=1,outline=true){
+  str=String(str);
+  const draw=(dx,dy,c)=>{g.fillStyle=c;let cx=x+dx;for(const ch of str){const m=DIG[ch];if(m){for(let i=0;i<15;i++)if(m[i]==='1')g.fillRect(cx+(i%3)*s,y+dy+Math.floor(i/3)*s,s,s);}cx+=4*s;}};
+  if(outline){for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1],[1,1]])draw(dx,dy,PAL.x);}
+  draw(0,0,col);
+}
+const numW=(str,s=1)=>String(str).length*4*s-s;
+
+/* ---------- 画布 ---------- */
+const W=112,H=128,CELL=17,BX=5,BY=24,N=6;
+const cv=document.getElementById('cv');const ctx=cv.getContext('2d');
+const buf=document.createElement('canvas');buf.width=W;buf.height=H;const g=buf.getContext('2d');
+let SCALE=3;
+function fit(){
+  const availW=Math.min(window.innerWidth-32,420),availH=Math.max(260,window.innerHeight-330);
+  SCALE=Math.max(2,Math.min(6,Math.floor(Math.min(availW/W,availH/H))));
+  cv.width=W*SCALE;cv.height=H*SCALE;cv.style.width=W*SCALE+'px';cv.style.height=H*SCALE+'px';ctx.imageSmoothingEnabled=false;
+}
+window.addEventListener('resize',fit);
+
+/* ---------- 声音 ---------- */
+let AC=null,soundOn=true;
+function tone(f,d=0.08,type='square',vol=0.05,delay=0,slide=0){
+  if(!soundOn)return;try{
+  if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+  const t=AC.currentTime+delay,o=AC.createOscillator(),v=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(30,f*slide),t+d);
+  v.gain.setValueAtTime(vol,t);v.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  o.connect(v).connect(AC.destination);o.start(t);o.stop(t+d+0.02);}catch(e){}
+}
+function noise(d=0.15,vol=0.06,delay=0){if(!soundOn)return;try{if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();
+  const len=Math.floor(AC.sampleRate*d),bf=AC.createBuffer(1,len,AC.sampleRate),da=bf.getChannelData(0);
+  for(let i=0;i<len;i++)da[i]=(Math.random()*2-1)*(1-i/len);
+  const s=AC.createBufferSource(),v=AC.createGain(),fl=AC.createBiquadFilter();fl.type='lowpass';fl.frequency.value=1200;
+  s.buffer=bf;v.gain.value=vol;s.connect(fl).connect(v).connect(AC.destination);s.start(AC.currentTime+delay);}catch(e){}}
+const SCALE_NOTES=[523,587,659,784,880,1047,1175,1319,1568,1760];
+
+/* ---------- 规则数据 ---------- */
+const SEASONS=[{n:'春',ico:'spring',target:90,moves:26},{n:'夏',ico:'summer',target:240,moves:30},{n:'秋',ico:'autumn',target:500,moves:34}];
+const CHARS=[
+ {id:'daiyu',n:'黛玉',skill:'葬花',ico:'bury',short:'收走一格 ×2',uses:2},
+ {id:'baochai',n:'宝钗',skill:'金锁',ico:'lock',short:'储物格 +1',uses:0},
+ {id:'xiangyun',n:'湘云',skill:'醉眠',ico:'nap',short:'挪一格 ×2',uses:2}
+];
+const SHOP=[
+ {id:'twin',n:'双生花',cost:4,desc:'{T3} 以上，2 个就合',relic:true},
+ {id:'bamboo',n:'竹影',cost:3,desc:'合出 {T5}，旁边 {T1} → {T2}',relic:true},
+ {id:'pavilion',n:'亭前花',cost:4,desc:'挨着 {T6}{T7} 合成：倍数 +2',relic:true},
+ {id:'bag',n:'锦囊',cost:3,desc:'储物格 +1',relic:true},
+ {id:'soil',n:'松土',cost:2,desc:'每季 +6 步',relic:true},
+ {id:'stone',n:'叠石',cost:3,desc:'{R1}{R1}{R1} → {R2}：分 ×4',relic:true},
+ {id:'link',n:'连理',cost:5,desc:'连锁倍数翻倍长',relic:true},
+ {id:'cherish',n:'惜花',cost:3,desc:'季末：园里 {T3} 以上再算一次分',relic:true},
+ {id:'dew',n:'露华',cost:3,desc:'袋里 +2 {D}（万能）',relic:false},
+ {id:'sprout',n:'添苗',cost:2,desc:'袋里 +3 {T2}',relic:false},
+ {id:'nostone',n:'去石',cost:2,desc:'袋里 {R1} 全变 {T1}',relic:false}
+];
+
+/* ---------- 状态 ---------- */
+let S=null;
+function newRun(charId){
+  const ch=CHARS.find(c=>c.id===charId);
+  S={char:ch,season:0,coins:0,relics:new Set(),
+     bag:[...Array(14).fill('T1'),...Array(4).fill('T2'),...Array(4).fill('R1'),'D'],
+     pile:[],board:null,score:0,shown:0,hold:0,moves:0,cur:null,store:[],storeCap:charId==='baochai'?2:1,
+     uses:0,mode:null,moveFrom:null,preview:null,busy:false,totalScore:0,goalHit:false};
+  startSeason();
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function refill(){if(S.pile.length===0)S.pile=shuffle(S.bag.slice());}
+function draw(){if(S.tut)return S.tutQ.length?S.tutQ.shift():'T1';refill();return S.pile.pop();}
+function peek(){if(S.tut)return S.tutQ[0]||'T1';refill();return S.pile[S.pile.length-1];}
+function startSeason(){
+  const se=SEASONS[S.season];
+  S.board=Array.from({length:N},()=>Array(N).fill(null));
+  S.score=0;S.shown=0;S.hold=0;S.goalHit=false;S.moves=se.moves+(S.relics.has('soil')?6:0);
+  S.pile=[];S.cur=draw();S.store=Array(S.storeCap+(S.relics.has('bag')?1:0)).fill(null);
+  S.uses=S.char.uses;S.mode=null;S.moveFrom=null;S.preview=null;S.busy=false;
+  for(let i=0;i<2;i++){const [r,c]=randEmpty();if(r!=null)S.board[r][c]='R1';}
+  ui();
+}
+function randEmpty(){const e=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!S.board[r][c])e.push([r,c]);return e.length?e[Math.floor(Math.random()*e.length)]:[null,null];}
+function full(){for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!S.board[r][c])return false;return true;}
+const minGroup=id=>(S.relics.has('twin')&&TIER(id)>=3)?2:3;
+function group(r,c,id,board=S.board){
+  const seen=new Set([r+','+c]),out=[[r,c]],q=[[r,c]];
+  while(q.length){const [a,b]=q.shift();for(const [dr,dc] of [[1,0],[-1,0],[0,1],[0,-1]]){const y=a+dr,x=b+dc;
+    if(y<0||x<0||y>=N||x>=N)continue;const k=y+','+x;if(seen.has(k))continue;if(board[y][x]===id){seen.add(k);out.push([y,x]);q.push([y,x]);}}}
+  return out;
+}
+function neighbors(r,c){return [[1,0],[-1,0],[0,1],[0,-1]].map(([a,b])=>[r+a,c+b]).filter(([y,x])=>y>=0&&x>=0&&y<N&&x<N);}
+function resolveDew(r,c,board=S.board){
+  const rank=v=>TIER(v)||(v==='R2'?1.5:0.5);
+  const cands=[...new Set(neighbors(r,c).map(([y,x])=>board[y][x]).filter(v=>v&&v!=='D'))].sort((a,b)=>rank(b)-rank(a));
+  for(const id of cands){board[r][c]=id;if(group(r,c,id,board).length>=minGroup(id))return id;}
+  board[r][c]='T1';return 'T1';
+}
+function simulate(r,c,piece){
+  const b=S.board.map(row=>row.slice());let id=piece;
+  if(id==='D')id=resolveDew(r,c,b);else b[r][c]=id;
+  const cells=group(r,c,id,b);const ok=cells.length>=minGroup(id);
+  return {id,cells:ok?cells:[[r,c]],merges:ok};
+}
+
+/* ---------- 特效 ---------- */
+const FX={parts:[],rings:[],waves:[],stars:[],petals:[],sparks:[],pops:[],moving:[],shake:0,flash:0,flashA:0,stop:0,bounce:{},glow:0,dust:[],flames:[]};
+const cellXY=(r,c)=>[BX+c*CELL,BY+r*CELL];
+const BAR={x:5,y:16,w:W-10};
+function burst(x,y,cols,n,speed=1){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=(0.5+Math.random()*1.7)*speed;
+  FX.parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-0.7,life:20+Math.random()*16,c:cols[i%cols.length],s:Math.random()<0.3?2:1});}}
+function ring(x,y,maxR,c,delay=0){FX.rings.push({x,y,r:2,maxR,c,life:18,delay});}
+function wave(x,y,maxR,c){FX.waves.push({x,y,r:1,maxR,c,life:16});}
+function stars(x,y,n,spread){for(let i=0;i<n;i++)FX.stars.push({x:x+(Math.random()*2-1)*spread,y:y+(Math.random()*2-1)*spread,life:14+Math.random()*20,delay:Math.floor(Math.random()*10),c:Math.random()<.5?PAL.W:PAL.y});}
+function petals(n){for(let i=0;i<n;i++)FX.petals.push({x:Math.random()*W,y:-4-Math.random()*40,vy:0.35+Math.random()*0.4,ph:Math.random()*6,life:180,c:Math.random()<.6?PAL.p:PAL.P});}
+function sparksTo(x,y,n,c){for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2;FX.sparks.push({x,y,vx:Math.cos(a)*1.5,vy:Math.sin(a)*1.5-1,t:0,delay:6+i,c});}}
+function firework(x,y,delay){setTimeout(()=>{burst(x,y,['y','p','b','g','v','o','W'].map(k=>PAL[k]),26,1.4);ring(x,y,10,PAL.y);stars(x,y,6,8);tone(700+Math.random()*500,0.12,'triangle',0.04);noise(0.12,0.04);},delay);}
+function pop(x,y,base,mult,col){FX.pops.push({x,y,base,mult,col,life:60,age:0});}
+function banner(text,cls=''){if(RM&&cls==='')return;const st=document.getElementById('stage');const d=document.createElement('div');d.className='banner '+cls;d.textContent=text;st.appendChild(d);setTimeout(()=>d.remove(),1200);}
+function punch(big){if(RM)return;cv.classList.remove('punch','punch2');void cv.offsetWidth;cv.classList.add(big?'punch2':'punch');setTimeout(()=>cv.classList.remove('punch','punch2'),90);}
+const COLS={T2:['g','G','W'],T3:['p','P','y','W'],T4:['g','p','W','G'],T5:['g','G','p','y','W'],T6:['o','O','v','y','W'],T7:['o','y','v','b','p','W'],R2:['s','S','W','b'],clear:['y','p','b','g','v','o','W']};
+const PRAISE={3:['好！','妙！','漂亮！'],4:['绝了！','神来之笔！','满园春色！']};
+
+/* 爆炸分级：1 小合 · 2 中合 · 3 大合 · 4 满园 */
+function level(tier,chain,terminal){if(terminal)return 4;const e=(tier-2)+(chain-1)*2;return e<=0?1:e<=2?2:e<=4?3:4;}
+function explode(cx,cy,res,tier,chain,lv){
+  const cols=(COLS[res]||COLS.clear).map(k=>PAL[k]);
+  const spec=[null,{p:10,st:0,rg:1,sh:1,fl:0,hs:0},{p:20,st:5,rg:2,sh:2,fl:0,hs:1},{p:34,st:10,rg:3,sh:4,fl:.35,hs:4},{p:56,st:16,rg:3,sh:6,fl:.5,hs:7}][lv];
+  burst(cx,cy,cols,spec.p+chain*4,1+lv*0.15);
+  for(let i=0;i<spec.rg;i++)ring(cx,cy,6+tier*2+chain*2+i*5,i%2?PAL.p:PAL.W,i*3);
+  if(spec.st)stars(cx,cy,spec.st,8+lv*3);
+  if(lv>=3){wave(cx,cy,26+lv*6,PAL.y);petals(lv===3?12:28);}
+  if(lv>=4){wave(cx,cy,48,PAL.p);const pts=[[20,40],[92,44],[30,100],[86,104],[56,70]];pts.forEach(([x,y],i)=>firework(x,y,120+i*110));FX.glow=70;}
+  FX.shake=RM?0:Math.max(FX.shake,spec.sh);FX.stop=Math.max(FX.stop,spec.hs);
+  if(spec.fl&&!RM){FX.flash=lv>=4?4:2;FX.flashA=spec.fl;}
+  if(lv>=3){punch(lv>=4);banner(PRAISE[lv][Math.floor(Math.random()*PRAISE[lv].length)]);}
+  sparksTo(cx,cy,2+lv*3,lv>=3?PAL.y:PAL.W);
+  // 声音：音高随连锁和级别往上走
+  const n=SCALE_NOTES[Math.min(SCALE_NOTES.length-1,tier-2+chain-1)]||523;
+  tone(n,0.1,'square',0.05);
+  if(lv>=2)tone(n*1.25,0.12,'square',0.035,0.04);
+  if(lv>=3){tone(n*1.5,0.16,'triangle',0.04,0.08);tone(90,0.25,'sine',0.12,0,0.5);noise(0.18,0.07);}
+  if(lv>=4){[0,1,2,3,4].forEach(i=>tone(SCALE_NOTES[i+3]||1319,0.12,'square',0.04,0.1+i*0.08));}
+}
+
+/* ---------- 流程 ---------- */
+const wait=ms=>new Promise(res=>setTimeout(res,ms));
+async function place(r,c){
+  if(S.busy||S.board[r][c])return;
+  S.busy=true;S.preview=null;
+  if(S.cur==='D')resolveDew(r,c);else S.board[r][c]=S.cur;
+  FX.bounce[r+','+c]=8;const [x,y]=cellXY(r,c);
+  for(let i=0;i<5;i++)FX.dust.push({x:x+8,y:y+14,vx:(i-2)*0.4,vy:-0.2,life:10});
+  tone(220,0.05,'square',0.04,0,0.7);
+  S.moves--;S.cur=draw();ui();
+  await resolveAt(r,c);await afterTurn();
+}
+async function resolveAt(r,c){
+  let chain=1;
+  while(true){
+    const id=S.board[r][c];if(!id)break;
+    const grp=group(r,c,id);if(grp.length<minGroup(id))break;
+    await mergeStep(grp,r,c,id,chain);chain++;
+    if(!NEXT[id])break;
+  }
+}
+async function mergeStep(grp,r,c,id,chain){
+  const nxt=NEXT[id];
+  const [tx,ty]=cellXY(r,c);
+  // 1) 预备：要合的那几格抖一下
+  FX.shake=Math.max(FX.shake,RM?0:0.8);
+  // 2) 收拢
+  FX.moving=grp.filter(([y,x])=>!(y===r&&x===c)).map(([y,x])=>{const [sx,sy]=cellXY(y,x);return {id,sx,sy,tx,ty,t:0};});
+  grp.forEach(([y,x])=>{if(!(y===r&&x===c))S.board[y][x]=null;});
+  tone(300+chain*40,0.12,'triangle',0.03,0,1.6);
+  await wait(160);FX.moving=[];
+  // 3) 合成
+  let mult=chain+(S.relics.has('link')?chain-1:0);
+  if(S.relics.has('pavilion')&&neighbors(r,c).some(([y,x])=>S.board[y][x]==='T6'||S.board[y][x]==='T7'))mult+=2;
+  let base,res,terminal=false;
+  if(nxt){res=nxt;S.board[r][c]=nxt;base=PTS[nxt]*grp.length;if(nxt==='R2'&&S.relics.has('stone'))base*=4;}
+  else{res='clear';terminal=true;S.board[r][c]=null;base=TERMINAL[id];}
+  const gain=base*mult;S.score+=gain;S.hold=Math.max(S.hold,14);
+  const tier=TIER(res)||(res==='R2'?3:7);const lv=level(tier,chain,terminal);
+  const cx=tx+CELL/2,cy=ty+CELL/2;
+  explode(cx,cy,res,tier,chain,lv);
+  pop(cx,ty-1,base,mult,lv>=3?PAL.y:PAL.W);
+  FX.bounce[r+','+c]=10;
+  if(chain>=2)banner('连锁 ×'+chain,'combo');
+  if(res==='T5'&&S.relics.has('bamboo')){neighbors(r,c).forEach(([y,x])=>{if(S.board[y][x]==='T1'){S.board[y][x]='T2';const [px,py]=cellXY(y,x);burst(px+8,py+8,[PAL.g,PAL.W],8);FX.bounce[y+','+x]=8;}});}
+  ui();await wait(260+lv*70);
+}
+async function afterTurn(){
+  if(S.tut){S.busy=false;ui();return tutAfter();}
+  if(S.score>=SEASONS[S.season].target||S.moves<=0||full()){await wait(400);return endSeason();}
+  S.busy=false;ui();
+}
+function cherishBonus(){
+  if(!S.relics.has('cherish'))return 0;let s=0;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const id=S.board[r][c];if(TIER(id)>=3){s+=PTS[id];const [x,y]=cellXY(r,c);stars(x+8,y+8,3,4);}}
+  return s;
+}
+async function endSeason(){
+  S.busy=true;
+  const se=SEASONS[S.season];
+  const bonus=cherishBonus();if(bonus){S.score+=bonus;S.hold=10;pop(W/2,BY+40,bonus,1,PAL.p);tone(660,0.12,'triangle');await wait(700);}
+  while(S.shown<S.score)await wait(50);
+  const pass=S.score>=se.target;
+  // 达标就收园：剩下的每一步变成一朵烟花和 1 枚铜钱
+  let saved=0;
+  if(pass){
+    await wait(500);
+    if(S.moves>0){banner('省下的步数变铜钱','goal');await wait(450);
+      const n=S.moves;
+      for(let i=0;i<n;i++){const [x,y]=cellXY(Math.floor(Math.random()*N),Math.floor(Math.random()*N));
+        firework(x+8,y+8,0);pop(x+8,y+4,1,1,PAL.y);saved++;S.moves--;ui();await wait(n>12?110:180);}
+      await wait(700);}
+  }
+  S.totalScore+=S.score;
+  if(pass){
+    const earned=3+saved;S.lastSaved=saved;
+    S.coins+=earned;
+    if(S.season===SEASONS.length-1){saveBest(S.totalScore);return showWin();}
+    showSeasonEnd(true,earned);
+  }else{saveBest(S.totalScore);showSeasonEnd(false,0);}
+}
+
+/* ---------- 输入 ---------- */
+function cellAt(x,y){const rect=cv.getBoundingClientRect();const lx=(x-rect.left)/rect.width*W,ly=(y-rect.top)/rect.height*H;
+  const c=Math.floor((lx-BX)/CELL),r=Math.floor((ly-BY)/CELL);return (r<0||c<0||r>=N||c>=N)?null:[r,c];}
+cv.addEventListener('pointerdown',e=>{const rc=cellAt(e.clientX,e.clientY);if(rc)cellTap(rc[0],rc[1]);});
+function cellTap(r,c){
+  if(!S||S.busy)return;
+  if(S.mode==='bury'){
+    if(!S.board[r][c])return tip('点有东西的格子');
+    const [x,y]=cellXY(r,c);burst(x+8,y+8,[PAL.p,PAL.P,PAL.W],18);petals(8);tone(520,0.2,'triangle',0.05,0,0.6);
+    S.board[r][c]=null;S.uses--;S.mode=null;ui();return tip('收走了');
+  }
+  if(S.mode==='move'){
+    if(!S.moveFrom){if(!S.board[r][c])return tip('点要挪的东西');S.moveFrom=[r,c];ui();return tip('再点一个空格');}
+    if(S.board[r][c])return tip('要挪到空格');
+    const [fr,fc]=S.moveFrom;S.board[r][c]=S.board[fr][fc];S.board[fr][fc]=null;S.uses--;S.mode=null;S.moveFrom=null;
+    tone(440,0.1,'triangle',0.05,0,1.5);FX.bounce[r+','+c]=8;
+    (async()=>{S.busy=true;ui();await resolveAt(r,c);await afterTurn();})();return;
+  }
+  if(S.board[r][c])return tip('这格有东西了');
+  if(S.preview&&S.preview.r===r&&S.preview.c===c){place(r,c);return;}
+  const sim=simulate(r,c,S.cur);S.preview={r,c,...sim};
+  tip(sim.merges?`合成 ${sim.cells.length} 个${NAME[sim.id]} · 再点一下放下`:'再点一下放下');
+  tone(sim.merges?520:180,0.03,'square',0.025);
+}
+document.getElementById('storeBox').addEventListener('click',swapStore);
+document.getElementById('storeBox').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();swapStore();}});
+function swapStore(){
+  if(!S||S.busy)return;
+  const i=S.store.findIndex(v=>v===null);
+  if(i>=0){S.store[i]=S.cur;S.cur=draw();tip('存起来了');}
+  else{const t=S.store[0];S.store[0]=S.cur;S.cur=t;S.store.push(S.store.shift());tip('换出来了');}
+  S.preview=null;tone(330,0.06,'triangle',0.04,0,1.3);ui();if(S.tut)tutAfter('store');
+}
+document.getElementById('skillBtn').addEventListener('click',()=>{
+  if(!S||S.busy||S.uses<=0)return;
+  if(S.char.id==='daiyu'){S.mode=S.mode==='bury'?null:'bury';tip(S.mode?'点一格，收走':'');}
+  if(S.char.id==='xiangyun'){S.mode=S.mode==='move'?null:'move';S.moveFrom=null;tip(S.mode?'点要挪的东西':'');}
+  S.preview=null;ui();
+});
+document.getElementById('soundBtn').addEventListener('click',e=>{soundOn=!soundOn;document.getElementById('soundIco').src=icoURL(soundOn?'sound':'mute');e.currentTarget.setAttribute('aria-pressed',soundOn);});
+document.getElementById('helpBtn').addEventListener('click',showHelp);
+function tip(t){document.getElementById('tip').textContent=t;}
+
+/* ---------- 界面 ---------- */
+function paintSlot(id,cvId){const c=document.getElementById(cvId),x=c.getContext('2d');x.clearRect(0,0,11,11);if(id)x.drawImage(spr(id),0,0);}
+function ui(){
+  if(!S)return;const se=SEASONS[S.season];
+  document.getElementById('seasonName').textContent=se.n;
+  document.getElementById('seasonIco').src=icoURL(se.ico);
+  document.getElementById('seasonIdx').textContent=`${S.season+1}/${SEASONS.length}`;
+  document.getElementById('whoIco').src=icoURL(S.char.id);
+  document.getElementById('target').textContent=se.target;
+  document.getElementById('moves').textContent=S.moves;
+  paintSlot(S.cur,'cvCur');document.getElementById('nmCur').textContent='手里：'+NAME[S.cur];
+  const nx=peek();paintSlot(nx,'cvNext');document.getElementById('nmNext').textContent='下一个：'+NAME[nx];
+  paintSlot(S.store[0],'cvStore');
+  document.getElementById('nmStore').textContent=`储物格 ${S.store.filter(Boolean).length}/${S.store.length}`+(S.store[0]?'：'+NAME[S.store[0]]:'');
+  const sb=document.getElementById('skillBtn');document.getElementById('skillIco').src=icoURL(S.char.ico);
+  if(S.char.id==='baochai'){document.getElementById('skillTxt').textContent='金锁：储物格 +1';sb.disabled=true;}
+  else{document.getElementById('skillTxt').textContent=`${S.char.skill} ×${S.uses}`;sb.disabled=S.uses<=0||S.busy;sb.classList.toggle('on',!!S.mode);}
+}
+
+/* ---------- 绘制循环 ---------- */
+let tick=0;
+function frame(){
+  requestAnimationFrame(frame);
+  if(!S)return;tick++;
+  if(FX.stop>0){FX.stop--;}else{
+    FX.parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.vx*=0.98;p.life--;});FX.parts=FX.parts.filter(p=>p.life>0);
+    FX.rings.forEach(r=>{if(r.delay>0){r.delay--;return;}r.r+=(r.maxR-r.r)*0.25;r.life--;});FX.rings=FX.rings.filter(r=>r.life>0);
+    FX.waves.forEach(w=>{w.r+=(w.maxR-w.r)*0.2;w.life--;});FX.waves=FX.waves.filter(w=>w.life>0);
+    FX.stars.forEach(s=>{if(s.delay>0)s.delay--;else s.life--;});FX.stars=FX.stars.filter(s=>s.life>0);
+    FX.petals.forEach(p=>{p.y+=p.vy;p.x+=Math.sin((tick+p.ph*20)/14)*0.35;p.life--;});FX.petals=FX.petals.filter(p=>p.life>0&&p.y<H+4);
+    FX.dust.forEach(d=>{d.x+=d.vx;d.y+=d.vy;d.life--;});FX.dust=FX.dust.filter(d=>d.life>0);
+    FX.sparks.forEach(s=>{if(s.delay>0){s.delay--;s.x+=s.vx;s.y+=s.vy;s.vy+=0.05;return;}s.t=Math.min(1,s.t+0.07);const tx=BAR.x+Math.min(BAR.w,BAR.w*Math.min(1,S.shown/SEASONS[S.season].target)),ty=BAR.y+2;
+      s.x+=(tx-s.x)*s.t*0.5;s.y+=(ty-s.y)*s.t*0.5;});FX.sparks=FX.sparks.filter(s=>s.t<1);
+    FX.pops.forEach(p=>{p.age++;p.life--;});FX.pops=FX.pops.filter(p=>p.life>0);
+    FX.moving.forEach(m=>{m.t=Math.min(1,m.t+0.13);});
+    for(const k in FX.bounce){FX.bounce[k]--;if(FX.bounce[k]<=0)delete FX.bounce[k];}
+    if(FX.shake>0)FX.shake=Math.max(0,FX.shake-0.3);if(FX.flash>0)FX.flash--;if(FX.glow>0)FX.glow--;
+    // 分数：先停一下，再一路数上去（越数越快），过目标时放「达标」
+    const se=SEASONS[S.season];
+    if(S.hold>0)S.hold--;
+    else if(S.shown<S.score){const step=Math.max(1,Math.ceil((S.score-S.shown)*0.1));S.shown=Math.min(S.score,S.shown+step);
+      if(tick%2===0)tone(700+Math.min(900,(S.shown/se.target)*500),0.025,'square',0.018);
+      if(!S.goalHit&&S.shown>=se.target){S.goalHit=true;banner('达标！','goal');tone(784,0.1,'square',0.05);tone(1047,0.18,'square',0.05,0.1);stars(BAR.x+BAR.w-6,BAR.y,10,8);}}
+    if(S.goalHit&&tick%3===0)FX.flames.push({x:BAR.x+Math.random()*BAR.w*Math.min(1,S.shown/se.target),y:BAR.y,life:10+Math.random()*8});
+    FX.flames.forEach(f=>{f.y-=0.4;f.life--;});FX.flames=FX.flames.filter(f=>f.life>0);
+  }
+  render();
+}
+function render(){
+  const se=SEASONS[S.season];
+  g.fillStyle='#191326';g.fillRect(0,0,W,H);
+  const sk=FX.shake>0?FX.shake:0;const sx=sk?Math.round((Math.random()*2-1)*sk):0,sy=sk?Math.round((Math.random()*2-1)*sk):0;
+  g.save();g.translate(sx,sy);
+  // 分数条 + 达标火苗
+  const pct=Math.min(1,S.shown/se.target);
+  FX.flames.forEach(f=>{g.fillStyle=f.life>12?PAL.y:f.life>6?PAL.o:PAL.r;g.fillRect(Math.round(f.x),Math.round(f.y),1,1);});
+  g.fillStyle=PAL.x;g.fillRect(BAR.x-1,BAR.y-1,BAR.w+2,6);g.fillStyle='#2A2140';g.fillRect(BAR.x,BAR.y,BAR.w,4);
+  g.fillStyle=S.goalHit?(Math.floor(tick/6)%2?PAL.y:PAL.o):PAL.p;g.fillRect(BAR.x,BAR.y,Math.round(BAR.w*pct),4);
+  g.fillStyle='rgba(255,255,255,.35)';g.fillRect(BAR.x,BAR.y,Math.round(BAR.w*pct),1);
+  const counting=S.shown<S.score&&S.hold<=0;const jx=counting?(tick%2?1:0):0;
+  drawNum(g,S.shown,6+jx,3,S.goalHit?PAL.y:PAL.W,2);
+  const tStr='/'+se.target;drawNum(g,tStr,W-6-numW(tStr),6,'#A797C4',1,false);
+  // 棋盘
+  const glowC=FX.glow>0?[PAL.p,PAL.y,PAL.b,PAL.g,PAL.v][Math.floor(tick/4)%5]:PAL.x;
+  g.fillStyle=glowC;g.fillRect(BX-2,BY-2,N*CELL+4,N*CELL+4);
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const [x,y]=cellXY(r,c);g.fillStyle=(r+c)%2?'#2F4C40':'#28423A';g.fillRect(x,y,CELL,CELL);
+    if((r*7+c*3)%5===0){g.fillStyle='#3A5C4D';g.fillRect(x+3+((r+c)%3)*4,y+12,1,2);g.fillRect(x+4+((r+c)%3)*4,y+11,1,3);}}
+  // 预览
+  if(S.preview){const p=S.preview;const pulse=Math.floor(tick/8)%2;
+    if(p.merges){g.fillStyle=pulse?'rgba(255,228,92,.38)':'rgba(255,228,92,.24)';p.cells.forEach(([y,x])=>{const [px,py]=cellXY(y,x);g.fillRect(px,py,CELL,CELL);});}
+    const [px,py]=cellXY(p.r,p.c);g.globalAlpha=0.55+0.3*Math.sin(tick/8);g.drawImage(spr(p.id||S.cur),px+3,py+3-(pulse?1:0));g.globalAlpha=1;
+    g.strokeStyle=PAL.y;g.lineWidth=1;g.strokeRect(px+0.5,py+0.5,CELL-1,CELL-1);}
+  if(S.moveFrom){const [px,py]=cellXY(...S.moveFrom);g.strokeStyle=PAL.p;g.strokeRect(px+0.5,py+0.5,CELL-1,CELL-1);}
+  // 东西：植物随风轻摆，要合成的那几格抖一下
+  const preCells=S.preview&&S.preview.merges?new Set(S.preview.cells.map(([y,x])=>y+','+x)):null;
+  for(let r=0;r<N;r++)for(let c=0;c<N;c++){const id=S.board[r][c];if(!id)continue;const [x,y]=cellXY(r,c);
+    const b=FX.bounce[r+','+c]||0;let dy=b>6?-2:b>2?-1:0,dx=0;
+    const t=TIER(id);if(t>=2&&t<=5&&Math.floor((tick+r*17+c*29)/40)%2===0)dx=1;
+    if(preCells&&preCells.has(r+','+c))dx=(tick%4<2)?1:-1;
+    g.drawImage(spr(id),x+3+dx,y+3+dy);}
+  FX.moving.forEach(m=>{const e=m.t*m.t;g.drawImage(spr(m.id),Math.round(m.sx+(m.tx-m.sx)*e)+3,Math.round(m.sy+(m.ty-m.sy)*e)+3);});
+  // 落地的灰
+  FX.dust.forEach(d=>{g.fillStyle='#8E86A6';g.fillRect(Math.round(d.x),Math.round(d.y),1,1);});
+  // 冲击波（菱形）、光环（方形）
+  FX.waves.forEach(w=>{g.fillStyle=w.c;const r=Math.round(w.r);for(let i=0;i<=r;i++){const j=r-i;[[i,j],[-i,j],[i,-j],[-i,-j]].forEach(([a,b2])=>g.fillRect(Math.round(w.x+a),Math.round(w.y+b2),1,1));}});
+  FX.rings.forEach(r=>{if(r.delay>0)return;g.strokeStyle=r.c;g.lineWidth=1;const s=Math.round(r.r);g.strokeRect(Math.round(r.x-s)+0.5,Math.round(r.y-s)+0.5,s*2,s*2);});
+  FX.parts.forEach(p=>{g.fillStyle=p.c;g.fillRect(Math.round(p.x),Math.round(p.y),p.s,p.s);});
+  FX.stars.forEach(s=>{if(s.delay>0)return;g.fillStyle=s.c;const x=Math.round(s.x),y=Math.round(s.y);g.fillRect(x,y,1,1);if(s.life>8){g.fillRect(x-1,y,1,1);g.fillRect(x+1,y,1,1);g.fillRect(x,y-1,1,1);g.fillRect(x,y+1,1,1);}});
+  FX.sparks.forEach(s=>{g.fillStyle=s.c;g.fillRect(Math.round(s.x),Math.round(s.y),1,1);});
+  // 跳数字：先蹦出「+基础分」，再砸上「×倍数」
+  FX.pops.forEach(p=>{const showMult=p.mult>1&&p.age>=10;const txt='+'+p.base+(showMult?'x'+p.mult:'');
+    const s=(p.age<4||(showMult&&p.age<14))?2:1;const y=Math.round(p.y-Math.min(10,p.age*0.35));const w=numW(txt,s);
+    drawNum(g,txt,Math.round(Math.max(1,Math.min(W-w-1,p.x-w/2))),y,showMult?PAL.y:p.col,s);});
+  g.restore();
+  FX.petals.forEach(p=>{g.fillStyle=p.c;g.fillRect(Math.round(p.x),Math.round(p.y),2,1);g.fillRect(Math.round(p.x)+1,Math.round(p.y)+1,1,1);});
+  if(FX.flash>0){g.fillStyle=`rgba(255,248,240,${FX.flashA})`;g.fillRect(0,0,W,H);}
+  ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(buf,0,0,W*SCALE,H*SCALE);
+}
+
+/* ---------- 弹层 ---------- */
+const ov=document.getElementById('ov'),card=document.getElementById('ovCard');
+function openOv(html){card.innerHTML=html;ov.hidden=false;}
+function closeOv(){ov.hidden=true;}
+function chainRow(){return `<div class="chain">${['T1','T2','T3','T4','T5','T6','T7'].map(id=>simg(id,'')).join('<span class="ar">▸</span>')}</div>`;}
+function showStart(){
+  const best=loadBest();let seen=false;try{seen=!!localStorage.getItem('dgy-sanheyi-tut');}catch(e){}
+  openOv(`<h2>大观园 · 三合一</h2>
+  ${chainRow()}
+  <div class="hrow" style="justify-content:center">${simg('T1','')}${simg('T1','')}${simg('T1','')}<span class="chain-eq kw" style="font-family:var(--display);font-size:20px">=</span>${simg('T2','')}<span class="lbl">三个一样，合成一个</span></div>
+  <button class="go" id="startBtn">开始</button>
+  <div class="row" style="justify-content:center">${seen?'<button class="small-link" id="tutBtn">新手引导</button>':''}${best?`<span class="owned">最好 <span class="kw">${best}</span></span>`:''}</div>`);
+  document.getElementById('startBtn').addEventListener('click',()=>{if(seen)showChars();else startTut();});
+  const tb=document.getElementById('tutBtn');if(tb)tb.addEventListener('click',startTut);
+}
+function showChars(){
+  openOv(`<h2>选一位姑娘</h2>
+  <div class="charcard">${CHARS.map(c=>`<button data-c="${c.id}">${img(c.id,'xl')}<b class="c-${c.id}">${c.n}</b><span class="sk">${img(c.ico,'s')}${c.short}</span></button>`).join('')}</div>`);
+  card.querySelectorAll('[data-c]').forEach(b=>b.addEventListener('click',()=>{closeOv();newRun(b.dataset.c);tip('点一下看预览，再点一下放下');}));
+}
+function showHelp(){
+  openOv(`<h2>${img('help')}怎么玩</h2>
+  ${chainRow()}
+  <div class="hrow">${simg('T1')}${simg('T1')}${simg('T1')}<span class="kw">=</span>${simg('T2')}<span class="lbl">三个一样就合成</span></div>
+  <div class="hrow">${simg('T2')}${simg('T2')}${simg('T2')}<span class="kw">=</span>${simg('T3')}<span class="lbl"><span class="kw-p">连锁</span>：倍数 +1</span></div>
+  <div class="hrow">${simg('R1')}${simg('R1')}${simg('R1')}<span class="kw">=</span>${simg('R2')}<span class="lbl">石头变假山</span></div>
+  <div class="hrow">${simg('D')}<span class="lbl"><span class="kw-b">露水</span>：自动变最划算的</span></div>
+  <div class="hrow">${img('bag','s')}<span class="lbl"><span class="kw-g">储物格</span>：先存一样</span></div>
+  <div class="hrow">${img('coin','s')}<span class="lbl">达标就过季，省一步 = <span class="kw">1 铜钱</span></span></div>
+  <button class="go" id="okHelp">知道了</button>`);
+  document.getElementById('okHelp').addEventListener('click',closeOv);
+}
+function showSeasonEnd(pass,earned){
+  const se=SEASONS[S.season];
+  if(pass){
+    openOv(`<h2>${img(se.ico)}${se.n}季 · <span class="kw-g">过了</span></h2><div class="big">${S.score}</div><p style="color:var(--mut)">目标 ${se.target}</p>
+    <div class="row"><span class="coins">${img('coin','s')}+${earned}</span><span class="owned">过季 3 + 省步 ${S.lastSaved||0}</span></div>
+    <button class="go" id="toShop">${img('coin','s')}去商店</button>`);
+    document.getElementById('toShop').addEventListener('click',()=>showShop(pickShop()));
+  }else{
+    const close=S.score>=se.target*0.8;
+    openOv(`<h2>${img(se.ico)}${se.n}季 · <span class="kw-p">${close?'就差一点':'差一点'}</span></h2><div class="big">${S.score}</div><p style="color:var(--mut)">目标 ${se.target} · 还差 <span class="kw-p">${se.target-S.score}</span></p>
+    <div class="row"><button class="go" id="again">再来</button></div>`);
+    document.getElementById('again').addEventListener('click',showChars);
+  }
+}
+function pickShop(){const pool=SHOP.filter(i=>!(i.relic&&S.relics.has(i.id)));return shuffle(pool.slice()).slice(0,3);}
+function showShop(offer){
+  const bagCount=id=>S.bag.filter(v=>v===id).length;
+  openOv(`<h2>${img('bag')}商店</h2>
+  <div class="row"><span class="coins">${img('coin','s')}${S.coins}</span><span class="owned">袋子 ${simg('T1')}${bagCount('T1')} ${simg('T2')}${bagCount('T2')} ${simg('R1')}${bagCount('R1')} ${simg('D')}${bagCount('D')}</span></div>
+  <div class="choices">${offer.map((it,i)=>`<button class="choice" data-i="${i}" ${S.coins<it.cost?'disabled':''}>${img(it.id,'l')}<div class="txt"><b class="kw">${it.n}</b><span class="hrow" style="font-size:13px;color:var(--fg)">${fmt(it.desc)}</span><span class="price">${img('coin','s')}${it.cost}</span></div></button>`).join('')}</div>
+  ${S.relics.size?`<div class="owned">已有：${[...S.relics].map(id=>img(id,'s')+SHOP.find(s=>s.id===id).n).join(' ')}</div>`:''}
+  <div class="row"><button id="reroll" ${S.coins<1?'disabled':''}>换一批 ${img('coin','s')}1</button><button class="go" id="nextSeason">${img(SEASONS[S.season+1].ico,'s')}下一季：${SEASONS[S.season+1].n}</button></div>`);
+  card.querySelectorAll('[data-i]').forEach(b=>b.addEventListener('click',()=>{
+    const it=offer[+b.dataset.i];if(S.coins<it.cost)return;S.coins-=it.cost;buy(it);tone(784,0.08,'square',0.04);tone(1175,0.12,'square',0.04,0.07);
+    offer.splice(+b.dataset.i,1);showShop(offer);}));
+  document.getElementById('reroll').addEventListener('click',()=>{if(S.coins<1)return;S.coins--;showShop(pickShop());});
+  document.getElementById('nextSeason').addEventListener('click',()=>{closeOv();S.season++;startSeason();tip(`${SEASONS[S.season].n}季开始`);});
+}
+function buy(it){
+  if(it.relic){S.relics.add(it.id);return;}
+  if(it.id==='dew')S.bag.push('D','D');
+  if(it.id==='sprout')S.bag.push('T2','T2','T2');
+  if(it.id==='nostone')S.bag=S.bag.map(v=>v==='R1'?'T1':v);
+}
+function showWin(){
+  openOv(`<h2>${img(S.char.id,'l')}<span class="kw-g">三季都过了</span></h2><div class="big">${S.totalScore}</div>
+  ${S.relics.size?`<div class="owned">道具：${[...S.relics].map(id=>img(id,'s')+SHOP.find(s=>s.id===id).n).join(' ')}</div>`:''}
+  <button class="go" id="again2">再来</button>`);
+  document.getElementById('again2').addEventListener('click',showChars);
+  [0,1,2,3,4,5].forEach(i=>firework(15+Math.random()*82,30+Math.random()*80,i*180));petals(30);FX.glow=120;
+}
+
+/* ---------- 新手引导（照《墨》引导设计：压暗、只亮该点的、一步一件事、随时跳过） ---------- */
+const TUT=[
+ {say:'把东西放进格子，三个一样就合成', show:'chain'},
+ {say:'点亮着的格子，<span class="kw">再点一下</span>放下', cell:[2,3], setup:()=>{S.board[2][1]='T1';S.board[2][2]='T1';S.cur='T1';S.tutQ=['T1','R1','T1','T1'];}},
+ {say:'三个 {T1} 合成一个 {T2}'},
+ {say:'放这里，看<span class="kw-p">连锁</span>', cell:[1,4], setup:()=>{S.board[0][4]='T1';S.board[1][5]='T1';S.board[2][4]='T2';S.cur='T1';}},
+ {say:'<span class="kw-p">连锁</span>一次，倍数 +1，炸得更大'},
+ {say:'不想要的 {R1}，先放进<span class="kw-g">储物格</span>', store:true, setup:()=>{S.cur='R1';S.tutQ=['T1','T1','T2'];}},
+ {say:'分数到头就过季<br>省下一步 = <span class="kw">1</span> {coin}', bar:true, pos:'bottom'},
+ {say:'去选一位姑娘吧', end:true}
+];
+let TI=0;const tutEl=document.getElementById('tut'),spotEl=document.getElementById('tutSpot'),sayEl=document.getElementById('tutSay'),handEl=document.getElementById('tutHand');
+handEl.src=icoURL('hand');
+function startTut(){
+  closeOv();
+  S={char:CHARS[0],season:0,coins:0,relics:new Set(),bag:['T1'],pile:[],board:Array.from({length:N},()=>Array(N).fill(null)),
+     score:0,shown:0,hold:0,moves:SEASONS[0].moves,cur:'T1',store:[null],storeCap:1,uses:0,mode:null,moveFrom:null,preview:null,busy:false,totalScore:0,goalHit:false,
+     tut:true,tutQ:[]};
+  TI=0;tutEl.hidden=false;tutShow();
+}
+function tutRect(st){
+  const cr=cv.getBoundingClientRect(),k=cr.width/W;
+  if(st.cell){const [r,c]=st.cell,[x,y]=cellXY(r,c);return {x:cr.left+x*k,y:cr.top+y*k,w:CELL*k,h:CELL*k};}
+  if(st.store){const b=document.getElementById('storeBox').getBoundingClientRect();return {x:b.left,y:b.top,w:b.width,h:b.height};}
+  if(st.bar){return {x:cr.left+(BAR.x-2)*k,y:cr.top+1*k,w:(BAR.w+4)*k,h:21*k};}
+  return null;
+}
+function tutShow(){
+  const st=TUT[TI];if(st.setup)st.setup();S.preview=null;ui();
+  const act=st.cell||st.store;
+  sayEl.className='say px '+(st.pos||'top');
+  sayEl.innerHTML=`<div class="line">${img('daiyu','l')}<div>${fmt(st.say)}</div></div>
+   ${st.show==='chain'?chainRow():''}
+   <div class="row2"><button class="small-link skip" id="tutSkip">跳过引导</button>${act?'':`<button class="go" id="tutOk">${st.end?'开始':'好'}</button>`}</div>`;
+  document.getElementById('tutSkip').addEventListener('click',endTut);
+  const ok=document.getElementById('tutOk');if(ok)ok.addEventListener('click',e=>{e.stopPropagation();tutNext();});
+  const r=tutRect(st);
+  if(r){Object.assign(spotEl.style,{left:r.x-3+'px',top:r.y-3+'px',width:r.w+6+'px',height:r.h+6+'px',display:'block'});}
+  else Object.assign(spotEl.style,{left:'50%',top:'50%',width:'0px',height:'0px'});
+  if(act&&r){handEl.hidden=false;handEl.style.left=(r.x+r.w*0.55)+'px';handEl.style.top=(r.y+r.h*0.55)+'px';}else handEl.hidden=true;
+}
+tutEl.addEventListener('pointerdown',e=>{
+  if(e.target.closest('button'))return;
+  const st=TUT[TI];const r=tutRect(st);
+  const inside=r&&e.clientX>=r.x&&e.clientX<=r.x+r.w&&e.clientY>=r.y&&e.clientY<=r.y+r.h;
+  if(inside&&st.cell&&!S.busy){cellTap(st.cell[0],st.cell[1]);if(S.preview)tutHint('再点一下');return;}
+  if(inside&&st.store){swapStore();return;}
+  sayEl.classList.remove('shake');void sayEl.offsetWidth;sayEl.classList.add('shake');
+});
+function tutHint(t){const d=sayEl.querySelector('.line div');if(d&&!d.dataset.h){d.dataset.h=1;d.innerHTML+=` · <span class="kw">${t}</span>`;}}
+function tutAfter(kind){const st=TUT[TI];if(!st)return;if((st.cell&&kind!=='store')||(st.store&&kind==='store'))setTimeout(tutNext,st.cell?500:250);}
+function tutNext(){TI++;if(TI>=TUT.length)return endTut();tutShow();}
+function endTut(){tutEl.hidden=true;handEl.hidden=true;try{localStorage.setItem('dgy-sanheyi-tut','1');}catch(e){}S.tut=false;showChars();}
+window.addEventListener('resize',()=>{if(!tutEl.hidden)tutShow();});
+
+function loadBest(){try{return +localStorage.getItem('dgy-sanheyi-best')||0;}catch(e){return 0;}}
+function saveBest(v){try{if(v>loadBest())localStorage.setItem('dgy-sanheyi-best',v);}catch(e){}}
+
+/* ---------- 开始 ---------- */
+document.getElementById('helpIco').src=icoURL('help');document.getElementById('soundIco').src=icoURL('sound');
+fit();
+S={char:CHARS[0],season:0,coins:0,relics:new Set(),bag:['T1'],pile:[],board:[
+ [null,'T1','T1',null,'R1',null],['T2','T2',null,'T3',null,null],[null,'T4','T3',null,'T1',null],
+ ['R1',null,'T5',null,'T2','T2'],[null,'T6',null,'T1',null,null],['D',null,null,'R2',null,'T7']],
+ score:0,shown:0,hold:0,moves:26,cur:'T1',store:[null],storeCap:1,uses:2,mode:null,moveFrom:null,preview:null,busy:true,totalScore:0,goalHit:false};
+ui();requestAnimationFrame(frame);showStart();
+window.__dgy={get S(){return S;},explode,level,icoURL,keys:Object.keys(ICO_SRC)};
+})();
+</script>
+
+</body>
+</html>
