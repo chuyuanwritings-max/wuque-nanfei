@@ -134,7 +134,7 @@ button.go{background:var(--mint);color:var(--line)}
     <button id="soundBtn" aria-pressed="true" aria-label="声音"><img class="ico s" id="soundIco" alt=""></button>
   </div>
   <div class="tip" id="tip">点一下看预览，再点一下放下</div>
-  <div class="note">原型 1.4 · 8 比特代码绘制 · 数值未调 · Kira</div>
+  <div class="note">原型 1.5 · 8 比特代码绘制 · 数值未调 · Kira</div>
 </div>
 
 <div class="overlay" id="ov" hidden><div class="card px" id="ovCard"></div></div>
@@ -158,6 +158,7 @@ const SP={
  T7:["....kkk....","...kooOk...","..kkkkkkk..","..kwbkbwk..",".kkkkkkkkk.","kooooOooook","kkkkkkkkkkk",".kwbkwkbwk.",".kwbkwkbwk.","kkkkkkkkkkk","kssssssssSk"],
  R1:["...........","...........","...........","....kkk....","...kssSk...","..kswssSk..","..ksssSSk..",".kssssSSSk.",".kSSSSSSSk.","..kkkkkkk..","..........."],
  R2:["...kkk.....","..kssSk....","..kswSk.kk.",".kssSSkkSk.",".kssSSSSSk.","kswsSSSSSSk","ksssSSSkSSk","kSsSSSkgkSk","kSSSSSSkSSk","kbbbbbbbbbk","kkkkkkkkkkk"],
+ X1:["...........","...........","....kkk....","..kkWWWkk..",".kWWWWWWWk.",".kWWbWWWWk.","kWWWWWWbWWk","kbWWWWWWWbk","kbbWWbWWbbk",".kbbbbbbbk.","..kkkkkkk.."],
  D: [".....k.....","....kbk....","....kbk....","...kbbbk...","..kbWbbbk..","..kbWbbBk..","..kbbbbBk..","..kbbbBBk..","...kBBBk...","....kkk....","..........."]
 };
 /* ---------- 像素图：头像（16×16）、技能、道具、界面图标（12×12） ---------- */
@@ -185,10 +186,15 @@ const ICON={
  autumn:[".....kk.....","....kOok....","..kkkoOkkk..",".kOoooOoooOk","..kOooOooOk.","...kooOook..","..kOooOooOk.",".kkOkkOkkOkk","....kkOkk...","......kN....",".......kN...","............"],
  heart:["............",".kkk..kkk...","kpPPkkpPPk..","kpPPPpPPPk..","kPPPPPPPPk..",".kPPPPPPk...","..kPPPPk....","...kPPk.....","....kk......","............","............","............"],
  xmark:["kk......kk..","krk....krk..",".krk..krk...","..krkkrk....","...krrk.....","..krkkrk....",".krk..krk...","krk....krk..","kk......kk..","............","............","............"],
+ rain:["...kkkkk....","..kwwwwwkk..",".kwwWwwwwwk.","kwwwwwwwwwwk","kSSSSSSSSSSk",".kkkkkkkkkk.","..b..b..b...",".b..b..b..b.","....b..b..b.","..b..b..b...",".b..b.......","............"],
+ cicada:["............","..k......k..","...k....k...","..kkkkkkkk..",".kGgkGGkgGk.","kWkGGGGGGkWk","kWWkGGGGkWWk","kWWkGGGGkWWk",".kWkGNNGkWk.","..kkGNNGkk..","....kNNk....",".....kk....."],
+ wind:["............","..ssssss....","........s...","sssssssss.s.","..........s.",".sssssssss..","............","WWWWWWW..g..",".......W.gG.","..WWWWW...g.","............","............"],
+ snowb:[".....b......","..b..W..b...","...b.W.b....","....bWb.....","bWWWWWWWWWb.","....bWb.....","...b.W.b....","..b..W..b...",".....b......","............","............","............"],
+ winter:["..........k.",".........kN.","...kk...kN..","..kWWk.kN...","..kWpWkN.kk.","...kkNNkkWWk","....kN..kWpW","...kN....kkk","..kN.kk......",".kN.kWWk.....","kN..kWpWk....","....kkkk....."],
  hand:["....kk......","...kWWk.....","...kWWk.....","...kWWkkk...","...kWWkWWkk.",".kkkWWkWWkWk","kWWkWWWWWkWk","kWWWWWWWWWWk",".kWWWWWWWWWk","..kWWWWWWWk.","...kWWWWWk..","...kkkkkkk.."],
  plus:["....kkk.....","....kgk.....","..kkkgkkk...","..kgggggk...","..kkkgkkk...","....kgk.....","....kkk.....","............","............","............","............","............"]
 };
-const NAME={T1:'种子',T2:'花苗',T3:'花',T4:'花丛',T5:'海棠树',T6:'亭子',T7:'楼阁',R1:'石头',R2:'假山',D:'露水'};
+const NAME={X1:'雪',T1:'种子',T2:'花苗',T3:'花',T4:'花丛',T5:'海棠树',T6:'亭子',T7:'楼阁',R1:'石头',R2:'假山',D:'露水'};
 const NEXT={T1:'T2',T2:'T3',T3:'T4',T4:'T5',T5:'T6',T6:'T7',T7:null,R1:'R2',R2:null};
 const PTS={T2:2,T3:6,T4:18,T5:50,T6:140,T7:400,R2:12};
 const TERMINAL={T7:1500,R2:150};
@@ -205,7 +211,7 @@ const ICO_SRC={
  twin:()=>gridCanvas(ICON.twin,12),bamboo:()=>gridCanvas(ICON.bamboo,12),pavilion:()=>compose('T6','heart'),
  bag:()=>gridCanvas(ICON.bag,12),soil:()=>gridCanvas(ICON.soil,12),stone:()=>compose('R2','plus'),link:()=>gridCanvas(ICON.link,12),
  cherish:()=>compose('T3','heart'),dew:()=>gridCanvas(ICON.dew2,12),sprout:()=>compose('T2','plus'),nostone:()=>compose('R1','xmark'),
- coin:()=>gridCanvas(ICON.coin,12),hand:()=>gridCanvas(ICON.hand,12),sound:()=>gridCanvas(ICON.sound,12),mute:()=>gridCanvas(ICON.mute,12),help:()=>gridCanvas(ICON.help,12),
+ coin:()=>gridCanvas(ICON.coin,12),rain:()=>gridCanvas(ICON.rain,12),cicada:()=>gridCanvas(ICON.cicada,12),wind:()=>gridCanvas(ICON.wind,12),snowb:()=>gridCanvas(ICON.snowb,12),winter:()=>gridCanvas(ICON.winter,12),hand:()=>gridCanvas(ICON.hand,12),sound:()=>gridCanvas(ICON.sound,12),mute:()=>gridCanvas(ICON.mute,12),help:()=>gridCanvas(ICON.help,12),
  spring:()=>gridCanvas(ICON.spring,12),summer:()=>gridCanvas(ICON.summer,12),autumn:()=>gridCanvas(ICON.autumn,12),
  daiyu:()=>portrait('daiyu','#5E8F84'),baochai:()=>portrait('baochai','#B07A5C'),xiangyun:()=>portrait('xiangyun','#A0506A')};
 function portrait(id,bg){const c=document.createElement('canvas');c.width=16;c.height=16;const x=c.getContext('2d');
@@ -259,7 +265,12 @@ function noise(d=0.15,vol=0.06,delay=0){if(!soundOn)return;try{if(!AC)AC=new (wi
 const SCALE_NOTES=[523,587,659,784,880,1047,1175,1319,1568,1760];
 
 /* ---------- 规则数据 ---------- */
-const SEASONS=[{n:'春',ico:'spring',target:90,moves:26},{n:'夏',ico:'summer',target:240,moves:30},{n:'秋',ico:'autumn',target:500,moves:34}];
+const BOSS={rain:{n:'春雨',ico:'rain',fx:'开局 {R1}×6'},cicada:{n:'蝉噪',ico:'cicada',fx:'{bag} 锁住'},
+ wind:{n:'秋风',ico:'wind',fx:'每 5 步 吹走 {T2}'},snow:{n:'大雪',ico:'snowb',fx:'每 4 步 落 {X1}'}};
+const SEASONS=(()=>{const q=[['春','spring','rain'],['夏','summer','cicada'],['秋','autumn','wind'],['冬','winter','snow']],
+  T=[60,100,150,210,280,360,450,560,680,820,980,1200],num=['一','二','三'];const out=[];
+  q.forEach(([n,ico,boss],si)=>{for(let k=0;k<3;k++){const i=si*3+k;out.push({n:n+num[k],season:n,ico,target:T[i],moves:24+k*2+si*2,boss:k===2?boss:null});}});
+  return out;})();
 const CHARS=[
  {id:'daiyu',n:'黛玉',skill:'葬花',ico:'bury',short:'收走一格 ×2',uses:2},
  {id:'baochai',n:'宝钗',skill:'金锁',ico:'lock',short:'储物格 +1',uses:0},
@@ -270,10 +281,10 @@ const SHOP=[
  {id:'bamboo',n:'竹影',cost:3,desc:'合出 {T5}，旁边 {T1} → {T2}',relic:true},
  {id:'pavilion',n:'亭前花',cost:4,desc:'挨着 {T6}{T7} 合成：倍数 +2',relic:true},
  {id:'bag',n:'锦囊',cost:3,desc:'储物格 +1',relic:true},
- {id:'soil',n:'松土',cost:2,desc:'每季 +6 步',relic:true},
+ {id:'soil',n:'松土',cost:2,desc:'每关 +6 步',relic:true},
  {id:'stone',n:'叠石',cost:3,desc:'{R1}{R1}{R1} → {R2}：分 ×4',relic:true},
  {id:'link',n:'连理',cost:5,desc:'连锁倍数翻倍长',relic:true},
- {id:'cherish',n:'惜花',cost:3,desc:'季末：园里 {T3} 以上再算一次分',relic:true},
+ {id:'cherish',n:'惜花',cost:3,desc:'关末：园里 {T3} 以上再算一次分',relic:true},
  {id:'dew',n:'露华',cost:3,desc:'袋里 +2 {D}（万能）',relic:false},
  {id:'sprout',n:'添苗',cost:2,desc:'袋里 +3 {T2}',relic:false},
  {id:'nostone',n:'去石',cost:2,desc:'袋里 {R1} 全变 {T1}',relic:false}
@@ -299,7 +310,8 @@ function startSeason(){
   S.score=0;S.shown=0;S.hold=0;S.goalHit=false;S.moves=se.moves+(S.relics.has('soil')?6:0);
   S.pile=[];S.cur=draw();S.store=Array(S.storeCap+(S.relics.has('bag')?1:0)).fill(null);
   S.uses=S.char.uses;S.mode=null;S.moveFrom=null;S.preview=null;S.busy=false;
-  for(let i=0;i<2;i++){const [r,c]=randEmpty();if(r!=null)S.board[r][c]='R1';}
+  S.steps=0;for(let i=0;i<(se.boss==='rain'?6:2);i++){const [r,c]=randEmpty();if(r!=null)S.board[r][c]='R1';}
+  if(se.boss)setTimeout(()=>bossIntro(se),60);
   ui();
 }
 function randEmpty(){const e=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(!S.board[r][c])e.push([r,c]);return e.length?e[Math.floor(Math.random()*e.length)]:[null,null];}
@@ -314,7 +326,7 @@ function group(r,c,id,board=S.board){
 function neighbors(r,c){return [[1,0],[-1,0],[0,1],[0,-1]].map(([a,b])=>[r+a,c+b]).filter(([y,x])=>y>=0&&x>=0&&y<N&&x<N);}
 function resolveDew(r,c,board=S.board){
   const rank=v=>TIER(v)||(v==='R2'?1.5:0.5);
-  const cands=[...new Set(neighbors(r,c).map(([y,x])=>board[y][x]).filter(v=>v&&v!=='D'))].sort((a,b)=>rank(b)-rank(a));
+  const cands=[...new Set(neighbors(r,c).map(([y,x])=>board[y][x]).filter(v=>v&&v!=='D'&&v!=='X1'))].sort((a,b)=>rank(b)-rank(a));
   for(const id of cands){board[r][c]=id;if(group(r,c,id,board).length>=minGroup(id))return id;}
   board[r][c]='T1';return 'T1';
 }
@@ -375,12 +387,21 @@ async function place(r,c){
   for(let i=0;i<5;i++)FX.dust.push({x:x+8,y:y+14,vx:(i-2)*0.4,vy:-0.2,life:10});
   tone(220,0.05,'square',0.04,0,0.7);
   S.moves--;S.cur=draw();ui();
-  await resolveAt(r,c);await afterTurn();
+  await resolveAt(r,c);await bossTick();await afterTurn();
 }
+async function bossTick(){
+  const se=SEASONS[S.season];if(!se.boss||S.tut)return;S.steps=(S.steps||0)+1;
+  if(se.boss==='wind'&&S.steps%5===0){const t=[];for(let r=0;r<N;r++)for(let c=0;c<N;c++)if(S.board[r][c]==='T1'||S.board[r][c]==='T2')t.push([r,c]);
+    if(t.length){const [r,c]=t[Math.floor(Math.random()*t.length)];const [x,y]=cellXY(r,c);burst(x+8,y+8,[PAL.g,PAL.o,PAL.W],12);S.board[r][c]=null;noise(0.3,0.05);FX.shake=2;tip('秋风吹走了一株');ui();await wait(350);}}
+  if(se.boss==='snow'&&S.steps%4===0){const [r,c]=randEmpty();if(r!=null){S.board[r][c]='X1';const [x,y]=cellXY(r,c);burst(x+8,y+8,[PAL.W,PAL.b],10);tone(1400,0.15,'triangle',0.03,0,0.5);FX.bounce[r+','+c]=8;tip('落雪了');ui();await wait(300);}}
+}
+function bossIntro(se){const b=BOSS[se.boss];
+  openOv(`<h2>${img(b.ico,'l')}<span class="kw-p">${b.n}</span></h2><div class="hrow" style="font-size:18px">${fmt(b.fx)}</div><button class="go" id="bossOk">来吧</button>`);
+  document.getElementById('bossOk').addEventListener('click',closeOv);tone(196,0.3,'square',0.05,0,0.7);}
 async function resolveAt(r,c){
   let chain=1;
   while(true){
-    const id=S.board[r][c];if(!id)break;
+    const id=S.board[r][c];if(!id||!(id in NEXT))break;
     const grp=group(r,c,id);if(grp.length<minGroup(id))break;
     await mergeStep(grp,r,c,id,chain);chain++;
     if(!NEXT[id])break;
@@ -475,6 +496,7 @@ document.getElementById('storeBox').addEventListener('click',swapStore);
 document.getElementById('storeBox').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();swapStore();}});
 function swapStore(){
   if(!S||S.busy)return;
+  if(SEASONS[S.season].boss==='cicada'&&!S.tut){tip('蝉噪：储物格锁住');tone(150,0.12,'square',0.04);return;}
   const i=S.store.findIndex(v=>v===null);
   if(i>=0){S.store[i]=S.cur;S.cur=draw();tip('存起来了');}
   else{const t=S.store[0];S.store[0]=S.cur;S.cur=t;S.store.push(S.store.shift());tip('换出来了');}
@@ -496,7 +518,7 @@ function ui(){
   if(!S)return;const se=SEASONS[S.season];
   document.getElementById('seasonName').textContent=se.n;
   document.getElementById('seasonIco').src=icoURL(se.ico);
-  document.getElementById('seasonIdx').textContent=`${S.season+1}/${SEASONS.length}`;
+  document.getElementById('seasonIdx').innerHTML=`${S.season+1}/${SEASONS.length}`+(se.boss?' '+img(BOSS[se.boss].ico,'s'):'');
   document.getElementById('whoIco').src=icoURL(S.char.id);
   document.getElementById('target').textContent=se.target;
   document.getElementById('moves').textContent=S.moves;
@@ -617,20 +639,21 @@ function showHelp(){
   <div class="hrow">${simg('R1')}${simg('R1')}${simg('R1')}<span class="kw">=</span>${simg('R2')}<span class="lbl">石头变假山</span></div>
   <div class="hrow">${simg('D')}<span class="lbl"><span class="kw-b">露水</span>：自动变最划算的</span></div>
   <div class="hrow">${img('bag','s')}<span class="lbl"><span class="kw-g">储物格</span>：先存一样</span></div>
-  <div class="hrow">${img('coin','s')}<span class="lbl">达标就过季，省一步 = <span class="kw">1 铜钱</span></span></div>
+  <div class="hrow">${img('coin','s')}<span class="lbl">达标就过关，省一步 = <span class="kw">1</span>${img('coin','s')}</span></div>
+  <div class="hrow">${img('rain','s')}${img('cicada','s')}${img('wind','s')}${img('snowb','s')}<span class="lbl">每季第 3 关有怪规则</span></div>
   <button class="go" id="okHelp">知道了</button>`);
   document.getElementById('okHelp').addEventListener('click',closeOv);
 }
 function showSeasonEnd(pass,earned){
   const se=SEASONS[S.season];
   if(pass){
-    openOv(`<h2>${img(se.ico)}${se.n}季 · <span class="kw-g">过了</span></h2><div class="big">${S.score}</div><p style="color:var(--mut)">目标 ${se.target}</p>
-    <div class="row"><span class="coins">${img('coin','s')}+${earned}</span><span class="owned">过季 3 + 省步 ${S.lastSaved||0}</span></div>
+    openOv(`<h2>${img(se.ico)}${se.n} · <span class="kw-g">过了</span></h2><div class="big">${S.score}</div><p style="color:var(--mut)">目标 ${se.target}</p>
+    <div class="row"><span class="coins">${img('coin','s')}+${earned}</span><span class="owned">3 + ${S.lastSaved||0}</span></div>
     <button class="go" id="toShop">${img('coin','s')}去商店</button>`);
     document.getElementById('toShop').addEventListener('click',()=>showShop(pickShop()));
   }else{
     const close=S.score>=se.target*0.8;
-    openOv(`<h2>${img(se.ico)}${se.n}季 · <span class="kw-p">${close?'就差一点':'差一点'}</span></h2><div class="big">${S.score}</div><p style="color:var(--mut)">目标 ${se.target} · 还差 <span class="kw-p">${se.target-S.score}</span></p>
+    openOv(`<h2>${img(se.ico)}${se.n} · <span class="kw-p">${close?'就差一点':'差一点'}</span></h2><div class="big">${S.score}</div><p style="color:var(--mut)">目标 ${se.target} · 还差 <span class="kw-p">${se.target-S.score}</span></p>
     <div class="row"><button class="go" id="again">再来</button></div>`);
     document.getElementById('again').addEventListener('click',showChars);
   }
@@ -642,12 +665,12 @@ function showShop(offer){
   <div class="row"><span class="coins">${img('coin','s')}${S.coins}</span><span class="owned">袋子 ${simg('T1')}${bagCount('T1')} ${simg('T2')}${bagCount('T2')} ${simg('R1')}${bagCount('R1')} ${simg('D')}${bagCount('D')}</span></div>
   <div class="choices">${offer.map((it,i)=>`<button class="choice" data-i="${i}" ${S.coins<it.cost?'disabled':''}>${img(it.id,'l')}<div class="txt"><b class="kw">${it.n}</b><span class="hrow" style="font-size:13px;color:var(--fg)">${fmt(it.desc)}</span><span class="price">${img('coin','s')}${it.cost}</span></div></button>`).join('')}</div>
   ${S.relics.size?`<div class="owned">已有：${[...S.relics].map(id=>img(id,'s')+SHOP.find(s=>s.id===id).n).join(' ')}</div>`:''}
-  <div class="row"><button id="reroll" ${S.coins<1?'disabled':''}>换一批 ${img('coin','s')}1</button><button class="go" id="nextSeason">${img(SEASONS[S.season+1].ico,'s')}下一季：${SEASONS[S.season+1].n}</button></div>`);
+  <div class="row"><button id="reroll" ${S.coins<1?'disabled':''}>换一批 ${img('coin','s')}1</button><button class="go" id="nextSeason">${img(SEASONS[S.season+1].ico,'s')}${SEASONS[S.season+1].n}${SEASONS[S.season+1].boss?' '+img(BOSS[SEASONS[S.season+1].boss].ico,'s'):''} ▸</button></div>`);
   card.querySelectorAll('[data-i]').forEach(b=>b.addEventListener('click',()=>{
     const it=offer[+b.dataset.i];if(S.coins<it.cost)return;S.coins-=it.cost;buy(it);tone(784,0.08,'square',0.04);tone(1175,0.12,'square',0.04,0.07);
     offer.splice(+b.dataset.i,1);showShop(offer);}));
   document.getElementById('reroll').addEventListener('click',()=>{if(S.coins<1)return;S.coins--;showShop(pickShop());});
-  document.getElementById('nextSeason').addEventListener('click',()=>{closeOv();S.season++;startSeason();tip(`${SEASONS[S.season].n}季开始`);});
+  document.getElementById('nextSeason').addEventListener('click',()=>{closeOv();S.season++;startSeason();tip(`${SEASONS[S.season].n}`);});
 }
 function buy(it){
   if(it.relic){S.relics.add(it.id);return;}
@@ -656,7 +679,7 @@ function buy(it){
   if(it.id==='nostone')S.bag=S.bag.map(v=>v==='R1'?'T1':v);
 }
 function showWin(){
-  openOv(`<h2>${img(S.char.id,'l')}<span class="kw-g">三季都过了</span></h2><div class="big">${S.totalScore}</div>
+  openOv(`<h2>${img(S.char.id,'l')}<span class="kw-g">四季圆满</span></h2><div class="big">${S.totalScore}</div>
   ${S.relics.size?`<div class="owned">道具：${[...S.relics].map(id=>img(id,'s')+SHOP.find(s=>s.id===id).n).join(' ')}</div>`:''}
   <button class="go" id="again2">再来</button>`);
   document.getElementById('again2').addEventListener('click',showChars);
@@ -671,7 +694,7 @@ const TUT=[
  {say:'放这里，看<span class="kw-p">连锁</span>', cell:[1,4], setup:()=>{S.board[0][4]='T1';S.board[1][5]='T1';S.board[2][4]='T2';S.cur='T1';}},
  {say:'<span class="kw-p">连锁</span>一次，倍数 +1，炸得更大'},
  {say:'不想要的 {R1}，先放进<span class="kw-g">储物格</span>', store:true, setup:()=>{S.cur='R1';S.tutQ=['T1','T1','T2'];}},
- {say:'分数到头就过季<br>省下一步 = <span class="kw">1</span> {coin}', bar:true, pos:'bottom'},
+ {say:'分数到头就过关<br>省一步 = <span class="kw">1</span> {coin}', bar:true, pos:'bottom'},
  {say:'去选一位姑娘吧', end:true}
 ];
 let TI=0;const tutEl=document.getElementById('tut'),spotEl=document.getElementById('tutSpot'),sayEl=document.getElementById('tutSay'),handEl=document.getElementById('tutHand');
@@ -729,7 +752,7 @@ S={char:CHARS[0],season:0,coins:0,relics:new Set(),bag:['T1'],pile:[],board:[
  ['R1',null,'T5',null,'T2','T2'],[null,'T6',null,'T1',null,null],['D',null,null,'R2',null,'T7']],
  score:0,shown:0,hold:0,moves:26,cur:'T1',store:[null],storeCap:1,uses:2,mode:null,moveFrom:null,preview:null,busy:true,totalScore:0,goalHit:false};
 ui();requestAnimationFrame(frame);showStart();
-window.__dgy={get S(){return S;},explode,level,icoURL,keys:Object.keys(ICO_SRC)};
+window.__dgy={get S(){return S;},explode,level,icoURL,keys:Object.keys(ICO_SRC),startSeason:()=>startSeason(),cellTap:(r,c)=>cellTap(r,c)};
 })();
 </script>
 
